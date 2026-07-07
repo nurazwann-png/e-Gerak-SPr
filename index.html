@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Penjejak Pergerakan Sektor Perancangan PPD Dalat</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SheetJS (XLSX) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Google Identity Services (Sign in with Google) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    /* Global Variables & Professional Slate Color Palette */
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --primary-blue: #2563eb;
+      --secondary-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-pink: #f43f5e;
+      --success-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --glow-blue: 0 0 15px rgba(37, 99, 235, 0.4);
+      --glow-cyan: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.06) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(9, 13, 22, 1) 0%, #05070c 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Subtle Cosmic Star Particles (Professional Workspace Density) */
+    .space-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: drift linear infinite;
+    }
+
+    @keyframes drift {
+      from { transform: translateY(100vh) scale(0.5); opacity: 0.1; }
+      to { transform: translateY(-10vh) scale(1.2); opacity: 0.7; }
+    }
+
+    /* Professional Subtle Gravity Floating Animations */
+    @keyframes float-slow {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes float-medium {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(-0.5deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+
+    @keyframes float-fast {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 10px rgba(37, 99, 235, 0.15); }
+      50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.45); }
+      100% { box-shadow: 0 0 10px rgba(37, 99, 235, 0.15); }
+    }
+
+    .float-s { animation: float-slow 8s ease-in-out infinite; }
+    .float-m { animation: float-medium 6s ease-in-out infinite; }
+    .float-f { animation: float-fast 4s ease-in-out infinite; }
+
+    /* Layout Header & Navigation */
+    header {
+      padding: 2rem 1.5rem 1rem 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-container i {
+      font-size: 2rem;
+      background: linear-gradient(45deg, var(--accent-cyan), var(--primary-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
+      animation: float-fast 4s ease-in-out infinite;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      text-shadow: 0px 4px 10px rgba(0,0,0,0.4);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Active User Dashboard Session Tag */
+    .user-profile-tag {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .user-profile-tag span {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .user-profile-tag .user-position {
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      border-left: 1px solid rgba(255,255,255,0.15);
+      padding-left: 10px;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+      display: flex;
+      align-items: center;
+      margin-left: 5px;
+    }
+
+    .logout-btn:hover {
+      color: var(--accent-pink);
+    }
+
+    @media (max-width: 768px) {
+      .user-profile-tag {
+        position: static;
+        margin: 10px auto;
+        justify-content: center;
+        max-width: 400px;
+      }
+    }
+
+    /* Navigation Menu */
+    nav {
+      display: none; /* Displayed when authenticated */
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 1.2rem auto 2rem auto;
+      max-width: 900px;
+      padding: 0 1rem;
+    }
+
+    .nav-btn {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      color: #fff;
+      border-color: rgba(37, 99, 235, 0.3);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(6, 182, 212, 0.15) 100%);
+      border-color: var(--primary-blue);
+      box-shadow: var(--glow-blue);
+      color: #fff;
+    }
+
+    .nav-btn i {
+      font-size: 1rem;
+    }
+
+    /* Main Container Views */
+    main {
+      flex: 1;
+      max-width: 1050px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2.2rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      display: none;
+      animation: float-slow 10s ease-in-out infinite;
+    }
+
+    .glass-card.active {
+      display: block;
+    }
+
+    .glass-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--secondary-blue), var(--accent-cyan), transparent);
+    }
+
+    /* Floating Character Guides (Professional Widget Style) */
+    .character-guide {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(30, 41, 59, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .character-avatar {
+      font-size: 2.6rem;
+      display: inline-block;
+      animation: float-medium 4s ease-in-out infinite;
+      cursor: pointer;
+      user-select: none;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+    }
+
+    .character-speech {
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: #cbd5e1;
+    }
+
+    .character-speech strong {
+      color: var(--accent-cyan);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* AUTHENTICATION VIEWS: Login & Register Cards */
+    .auth-container {
+      max-width: 480px;
+      width: 100%;
+      margin: 2.5rem auto;
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+      position: relative;
+    }
+
+    .auth-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-blue), var(--accent-cyan));
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .auth-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .auth-toggle-link {
+      color: var(--secondary-blue);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .auth-toggle-link:hover {
+      color: var(--accent-cyan);
+      text-decoration: underline;
+    }
+
+    .error-msg {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.25);
+      border-radius: 8px;
+      color: #fda4af;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Form Fields & Styling */
+    .form-group {
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px 12px 40px;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: all 0.25s ease;
+    }
+
+    .form-textarea {
+      padding-left: 14px;
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .form-input:focus + i, .input-wrapper:focus-within i {
+      color: var(--accent-cyan);
+    }
+
+    .form-select {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--glow-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 1.5rem;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(37, 99, 235, 0.65);
+    }
+
+    /* UTAMA (HOME) */
+    .home-hero {
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #fff;
+    }
+
+    .hero-title span {
+      background: linear-gradient(45deg, var(--accent-cyan), var(--secondary-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto 2.2rem auto;
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    /* Dashboard Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(30, 41, 59, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(37, 99, 235, 0.25);
+      background: rgba(37, 99, 235, 0.03);
+      box-shadow: var(--glow-blue);
+    }
+
+    .stat-card i {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--secondary-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .portal-section {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    /* KALENDAR PAGE */
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+    }
+
+    @media(max-width: 768px) {
+      .time-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .clock-container {
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 220px;
+    }
+
+    .clock-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent-cyan);
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .digital-clock {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+      text-shadow: 0 0 15px rgba(37, 99, 235, 0.45);
+      margin-bottom: 0.5rem;
+    }
+
+    .digital-date {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .digital-day {
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #93c5fd;
+    }
+
+    .calendar-container {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 1.25rem;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .calendar-header h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .calendar-nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .calendar-nav-btn:hover {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .calendar-day:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .calendar-day.today {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+      color: #fff;
+      font-weight: 700;
+      box-shadow: var(--glow-blue);
+    }
+
+    .calendar-day.has-movement::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--accent-cyan);
+      box-shadow: var(--glow-cyan);
+    }
+
+    .calendar-day.other-month {
+      color: rgba(255, 255, 255, 0.15);
+      pointer-events: none;
+    }
+
+    .calendar-day.selected {
+      border: 1.5px solid var(--accent-cyan);
+    }
+
+    .day-events-container {
+      margin-top: 1.25rem;
+      background: rgba(255, 255, 255, 0.01);
+      border-radius: 8px;
+      padding: 0.8rem;
+      border-left: 2px solid var(--accent-cyan);
+    }
+
+    .day-events-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .day-events-list {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      list-style: none;
+    }
+
+    .day-event-item {
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .day-event-item:last-child {
+      border-bottom: none;
+    }
+
+    .day-event-name {
+      color: #bfdbfe;
+      font-weight: 500;
+    }
+
+    .day-event-dest {
+      color: var(--accent-cyan);
+    }
+
+    /* BORANG PERGERAKAN */
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .form-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      color: #fff;
+      text-align: center;
+      background: linear-gradient(90deg, #fff, var(--secondary-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ANALISIS PERGERAKAN */
+    .analysis-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .analysis-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      color: #fff;
+    }
+
+    .search-box {
+      position: relative;
+      max-width: 300px;
+      width: 100%;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      padding: 8px 14px 8px 36px;
+      color: #fff;
+      font-size: 0.85rem;
+      transition: all 0.25s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--secondary-blue);
+      box-shadow: var(--glow-blue);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--accent-cyan);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-mesyuarat { background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); color: #93c5fd; }
+    .badge-bengkel { background: rgba(161, 85, 255, 0.15); border: 1px solid rgba(161, 85, 255, 0.35); color: #e9d5ff; }
+    .badge-kursus { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); color: #fde68a; }
+    .badge-pemantauan { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #a7f3d0; }
+    .badge-cuti-umum { background: rgba(100, 116, 139, 0.2); border: 1px solid rgba(100, 116, 139, 0.4); color: #cbd5e1; }
+    .badge-pelepasan { background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.35); color: #a5f3fc; }
+    .badge-lain { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.35); color: #fecdd3; }
+    .badge-cuti { background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.35); color: #fef08a; }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      color: var(--accent-pink);
+      background: rgba(244, 63, 94, 0.08);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--text-muted), rgba(255,255,255,0.05));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      animation: float-medium 5s ease-in-out infinite;
+    }
+
+    .insights-panel {
+      margin-top: 1.5rem;
+      background: rgba(255, 255, 255, 0.015);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .insights-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .insights-title i {
+      color: var(--accent-cyan);
+    }
+
+    .bars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .insight-bar-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .insight-bar-lbl {
+      width: 130px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .insight-bar-outer {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .insight-bar-inner {
+      height: 100%;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+    }
+
+    .insight-bar-val {
+      width: 25px;
+      text-align: right;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* JANA PERGERAKAN (DOWNLOAD) */
+    .generate-bay {
+      max-width: 550px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 0.5rem 0;
+    }
+
+    .teleport-terminal {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(6, 182, 212, 0.12);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .teleport-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 1.25rem 0;
+      text-align: left;
+    }
+
+    .teleport-metric {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .teleport-metric-lbl {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .teleport-metric-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .beam-btn {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse-glow 3s infinite;
+    }
+
+    .beam-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 
+        0 0 25px rgba(37, 99, 235, 0.6),
+        0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    .reset-orbit-container {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid rgba(244, 63, 94, 0.25);
+      color: rgba(244, 63, 94, 0.7);
+      padding: 6px 14px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .reset-btn:hover {
+      background: rgba(244, 63, 94, 0.1);
+      color: #f43f5e;
+      border-color: #f43f5e;
+    }
+
+    /* Cosmic Toast Alert */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--success-green);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      transform: translateY(50px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 0.85rem;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast i {
+      font-size: 1.1rem;
+    }
+
+    /* Cosmic Footer */
+    footer {
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+      margin-top: auto;
+    }
+
+    footer p {
+      margin-bottom: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      header {
+        padding: 1.5rem 1rem 0.5rem 1rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      .nav-btn {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+      }
+      .glass-card {
+        padding: 1.5rem;
+      }
+      .character-guide {
+        flex-direction: column;
+        text-align: center;
+      }
+      .digital-clock {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Star Background Container -->
+  <div class="space-background" id="space-background"></div>
+
+  <!-- Header Section -->
+  <header>
+    <div class="logo-container">
+      <i class="fa-solid fa-user-astronaut"></i>
+      <h1>PPD Dalat</h1>
+    </div>
+    <div class="subtitle">Sistem Penjejak Pergerakan Sektor Perancangan</div>
+
+    <!-- Active User Session Badge (Updated dynamically in JS) -->
+    <div class="user-profile-tag" id="header-user-tag" style="display: none;">
+      <img id="header-user-avatar" src="" alt="" style="width: 22px; height: 22px; border-radius: 50%; display: none;">
+      <i class="fa-solid fa-circle-user" id="header-user-icon" style="color: var(--accent-cyan);"></i>
+      <span id="header-user-name">User</span>
+      <span class="user-position" id="header-user-pos">Penolong Pegawai Pendidikan</span>
+      <button class="logout-btn" onclick="handleLogout()" title="Log Keluar">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Menu (Shown only when authenticated) -->
+  <nav id="app-nav">
+    <button class="nav-btn active float-s" onclick="switchTab('utama')">
+      <i class="fa-solid fa-rocket"></i> Utama
+    </button>
+    <button class="nav-btn float-m" onclick="switchTab('kalendar')">
+      <i class="fa-solid fa-calendar-days"></i> Kalendar
+    </button>
+    <button class="nav-btn float-f" onclick="switchTab('borang')">
+      <i class="fa-solid fa-file-invoice"></i> Borang
+    </button>
+    <button class="nav-btn float-s" onclick="switchTab('analisis')">
+      <i class="fa-solid fa-chart-simple"></i> Analisis
+    </button>
+    <button class="nav-btn float-m" onclick="switchTab('jana')">
+      <i class="fa-solid fa-file-excel"></i> Jana Fail
+    </button>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main>
+
+    <!-- AUTHENTICATION PANEL: GOOGLE SIGN-IN -->
+    <div class="auth-container" id="auth-panel">
+
+      <!-- VIEW: GOOGLE LOGIN -->
+      <div class="auth-card" id="view-google-login">
+        <div class="auth-header">
+          <h2>Log Masuk Pegawai</h2>
+          <p>Log masuk menggunakan akaun Google rasmi MOE anda</p>
+        </div>
+
+        <div class="error-msg" id="login-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="login-error-text">Akaun Google ini bukan akaun rasmi MOE.</span>
+        </div>
+
+        <div id="google-signin-button" style="display: flex; justify-content: center; margin-top: 1.5rem;"></div>
+
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
+          Hanya akaun e-mel berakhiran <strong>@moe.gov.my</strong> atau <strong>@moe.gov</strong> dibenarkan log masuk.
+        </p>
+      </div>
+
+      <!-- VIEW: ONE-TIME PROFILE COMPLETION (Jawatan) -->
+      <div class="auth-card" id="view-complete-profile" style="display: none;">
+        <div class="auth-header">
+          <h2>Lengkapkan Profil</h2>
+          <p>Sebelum meneruskan, sila nyatakan jawatan anda</p>
+        </div>
+
+        <form onsubmit="handleCompleteProfile(event)">
+          <div class="form-group">
+            <label class="form-label" for="profile-position">Jawatan</label>
+            <div class="input-wrapper">
+              <select class="form-select" id="profile-position" required>
+                <option value="" disabled selected>Pilih Jawatan...</option>
+                <option value="Penolong Pegawai Pendidikan">Penolong Pegawai Pendidikan</option>
+                <option value="Timbalan Sektor Perancangan">Timbalan Sektor Perancangan</option>
+              </select>
+              <i class="fa-solid fa-briefcase"></i>
+              <i class="fa-solid fa-chevron-down select-arrow"></i>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fa-solid fa-check"></i> Teruskan ke Pangkalan Orbit
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT (Locked behind auth session) -->
+    <div id="main-content" style="display: none; width: 100%;">
+
+      <!-- SECTION: UTAMA (HOME) -->
+      <div class="glass-card active" id="tab-utama">
+        <!-- Character Guide -->
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">🧑‍🚀</div>
+          <div class="character-speech">
+            <strong>Kapt. Astro-Dalat:</strong> "Selamat datang ke Utama! Saya adalah pegawai pemantau orbit anda hari ini. Di sini, anda boleh mendapatkan ringkasan pantas tentang misi pergerakan kami sebelum melancarkan diri ke modul lain!"
+          </div>
+        </div>
+
+        <div class="home-hero">
+          <h2 class="hero-title">Pusat Kawalan <span>Pergerakan Sektor</span></h2>
+          <p class="hero-desc">
+            Sistem ini merekodkan pergerakan keluar masuk pegawai Sektor Perancangan PPD Dalat secara digital. Memastikan tiada kerosakan komunikasi ketika menjalankan tugas rasmi di stesen bumi mahupun stesen angkasa.
+          </p>
+        </div>
+
+        <!-- Dashboard Statistics Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <i class="fa-solid fa-gauge-high"></i>
+            <div class="stat-val" id="stat-total-logs">0</div>
+            <div class="stat-lbl">Jumlah Log Pergerakan</div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-user-astronaut"></i>
+            <div class="stat-val" id="stat-active-today">0</div>
+            <div class="stat-lbl">Pergerakan Hari Ini</div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-network-wired"></i>
+            <div class="stat-val" id="stat-unique-officers">0</div>
+            <div class="stat-lbl">Pegawai Terlibats</div>
+          </div>
+        </div>
+
+        <div class="portal-section">
+          <button class="submit-btn" style="width: auto; padding: 12px 30px; margin: 0 auto; display: inline-flex;" onclick="switchTab('borang')">
+            <i class="fa-solid fa-plus"></i> Daftar Pergerakan Baru
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION: KALENDAR -->
+      <div class="glass-card" id="tab-kalendar">
+        <!-- Character Guide -->
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛰️</div>
+          <div class="character-speech">
+            <strong>Satelit Waktu-Ruang:</strong> "Mengimbas masa... Waktu di angkasa adalah relatif, tetapi kami telah menyegerakannya ke Waktu Standard Dalat! Pilih mana-mana tarikh di kalendar untuk melihat pergerakan berjadual."
+          </div>
+        </div>
+
+        <div class="time-grid">
+          <!-- Galaxy Clock -->
+          <div class="clock-container">
+            <div class="clock-title"><i class="fa-solid fa-circle-notch fa-spin"></i> Waktu Angkasa PPD</div>
+            <div class="digital-clock" id="digital-clock">00:00:00</div>
+            <div class="digital-date" id="digital-date">Selasa, 7 Julai 2026</div>
+            <div class="digital-day" id="digital-day">Modul Kalendar Aktif</div>
+          </div>
+
+          <!-- Custom Interactive Calendar Widget -->
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button class="calendar-nav-btn" onclick="adjustMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+              <h3 id="calendar-month-year">Julai 2026</h3>
+              <button class="calendar-nav-btn" onclick="adjustMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="calendar-weekdays">
+              <div>AH</div><div>IS</div><div>SE</div><div>RA</div><div>KH</div><div>JU</div><div>SA</div>
+            </div>
+            <div class="calendar-days" id="calendar-days-grid">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Highlight list for chosen date -->
+            <div class="day-events-container">
+              <div class="day-events-title" id="selected-day-title">Pergerakan Tarikh: 07/07/2026</div>
+              <ul class="day-events-list" id="selected-day-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: BORANG PERGERAKAN -->
+      <div class="glass-card" id="tab-borang">
+        <!-- Character Guide -->
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">👽</div>
+          <div class="character-speech">
+            <strong>Zog si Penulis:</strong> "Bip bop! Masukkan koordinat dan destinasi misi anda ke dalam pangkalan data saya. Sekiranya kapal anda diculik lubang hitam (black hole), penyelamat tahu lokasi pencarian!"
+          </div>
+        </div>
+
+        <div class="form-container">
+          <h2 class="form-title">Daftar Misi Pergerakan Pegawai</h2>
+          <form id="movement-form" onsubmit="handleFormSubmit(event)">
+            
+            <!-- Nama Pegawai -->
+            <div class="form-group">
+              <label class="form-label" for="nama_pegawai">Nama Pegawai</label>
+              <div class="input-wrapper">
+                <input class="form-input" type="text" id="nama_pegawai" placeholder="Cth: Encik Mohamad Fauzi bin Suhaili" required>
+                <i class="fa-solid fa-user-astronaut"></i>
+              </div>
+            </div>
+
+            <!-- Tarikh -->
+            <div class="form-group">
+              <label class="form-label" for="tarikh_pergerakan">Tarikh Pergerakan</label>
+              <div class="input-wrapper">
+                <input class="form-input" type="date" id="tarikh_pergerakan" required>
+                <i class="fa-solid fa-calendar-day"></i>
+              </div>
+            </div>
+
+            <!-- Destinasi/Lokasi -->
+            <div class="form-group">
+              <label class="form-label" for="destinasi">Destinasi / Lokasi</label>
+              <div class="input-wrapper">
+                <input class="form-input" type="text" id="destinasi" placeholder="Cth: SMK Dalat / PPD Mukah" required>
+                <i class="fa-solid fa-map-marker-alt"></i>
+              </div>
+            </div>
+
+            <!-- Tujuan (Dropdown with Cuti Umum and Pelepasan) -->
+            <div class="form-group">
+              <label class="form-label" for="tujuan">Tujuan Pergerakan</label>
+              <div class="input-wrapper">
+                <select class="form-select" id="tujuan" required>
+                  <option value="" disabled selected>Pilih Tujuan Misi...</option>
+                  <option value="Mesyuarat">Mesyuarat / Perbincangan</option>
+                  <option value="Bengkel">Bengkel Kerja</option>
+                  <option value="Kursus">Kursus / Latihan</option>
+                  <option value="Pemantauan">Pemantauan Sekolah</option>
+                  <option value="Cuti Umum">Cuti Umum</option>
+                  <option value="Pelepasan">Pelepasan</option>
+                  <option value="Cuti">Cuti Rehat / Cuti Sakit</option>
+                  <option value="Tugas Rasmi Lain">Tugas Rasmi Lain</option>
+                </select>
+                <i class="fa-solid fa-circle-question"></i>
+                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+
+            <!-- Nota -->
+            <div class="form-group">
+              <label class="form-label" for="nota">Nota Tambahan</label>
+              <textarea class="form-textarea" id="nota" placeholder="Masukkan ulasan ringkas mengenai agenda pergerakan..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">
+              <i class="fa-solid fa-paper-plane"></i> Hantar Ke Pangkalan Orbit
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- SECTION: ANALISIS PERGERAKAN -->
+      <div class="glass-card" id="tab-analisis">
+        <!-- Character Guide -->
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛸</div>
+          <div class="character-speech">
+            <strong>UFO Penganalisis:</strong> "Mengimbas log orbit... Di sini anda boleh meneliti senarai pergerakan pegawai Sektor Perancangan. Gunakan kotak carian untuk menapis log secara tepat!"
+          </div>
+        </div>
+
+        <div class="analysis-header">
+          <h2 class="analysis-title">Log & Analisis Pergerakan</h2>
+          <div class="search-box">
+            <input type="text" class="search-input" id="search-input" onkeyup="filterTable()" placeholder="Cari nama, lokasi atau tujuan...">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+        </div>
+
+        <!-- Glowing Table -->
+        <div class="table-container">
+          <table id="movement-table">
+            <thead>
+              <tr>
+                <th>Nama Pegawai</th>
+                <th>Tarikh</th>
+                <th>Destinasi / Lokasi</th>
+                <th>Tujuan</th>
+                <th>Nota</th>
+                <th style="width: 80px; text-align: center;">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          
+          <!-- Table Empty State -->
+          <div class="empty-state" id="table-empty-state" style="display: none;">
+            <i class="fa-solid fa-ghost"></i>
+            <h3>Tiada Log Pergerakan Dijumpai</h3>
+            <p>Semua pegawai berada di pangkalan utama (PPD Dalat) atau carian anda tiada padanan.</p>
+          </div>
+        </div>
+
+        <!-- Visual Insights Grid -->
+        <div class="insights-panel" id="insights-panel">
+          <div class="insights-title">
+            <i class="fa-solid fa-chart-pie"></i> Analisis Taburan Tujuan Misi
+          </div>
+          <div class="bars-container" id="insights-bars">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: JANA PERGERAKAN (DOWNLOAD) -->
+      <div class="glass-card" id="tab-jana">
+        <!-- Character Guide -->
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">☄️</div>
+          <div class="character-speech">
+            <strong>Komet Data:</strong> "Data bersedia untuk dihantar ke Sistem Fail Bumi! Hanya klik butang pemancar di bawah untuk menukar senarai log ke format Microsoft Excel (.xlsx)."
+          </div>
+        </div>
+
+        <div class="generate-bay">
+          <div class="teleport-terminal">
+            <i class="fa-solid fa-satellite fa-3x" style="color: var(--accent-cyan); margin-bottom: 1rem; animation: float-fast 5s ease-in-out infinite;"></i>
+            <h2 style="font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; color:#fff;">Pemancar Dokumen Excel</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+              Fail Excel yang dijana mengandungi kesemua log data pergerakan sektor perancangan yang disimpan dalam ingatan pelayar ini.
+            </p>
+
+            <div class="teleport-grid">
+              <div class="teleport-metric">
+                <div class="teleport-metric-lbl">Saiz Rekod</div>
+                <div class="teleport-metric-val" id="metric-record-count">0 Rekod</div>
+              </div>
+              <div class="teleport-metric">
+                <div class="teleport-metric-lbl">Status Enjin</div>
+                <div class="teleport-metric-val" style="color: var(--success-green);"><i class="fa-solid fa-circle-check"></i> Sedia</div>
+              </div>
+            </div>
+
+            <button class="beam-btn" onclick="exportToExcel()">
+              <i class="fa-solid fa-file-excel"></i> Beam Ke Excel (.xlsx)
+            </button>
+          </div>
+
+          <div class="reset-orbit-container">
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 10px;">
+              Perhatian: Menetapkan semula orbit akan memadamkan kesemua pergerakan yang tersimpan dalam pelayar ini secara kekal.
+            </p>
+            <button class="reset-btn" onclick="resetSystemData()">
+              <i class="fa-solid fa-radiation"></i> Tetap Semula Orbit (Clear Data)
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Cosmic Toast Containers -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer Section -->
+  <footer>
+    <p>&copy; 2026 Sektor Perancangan, Pejabat Pendidikan Daerah Dalat.</p>
+    <p>Dicipta dengan Sentuhan Kosmik Antigravity <i class="fa-solid fa-meteor" style="color: var(--primary-blue);"></i></p>
+  </footer>
+
+  <script>
+    // Star Background Generator
+    function createStars() {
+      const bg = document.getElementById('space-background');
+      const count = 40; // Toned down density slightly for professional look
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        
+        const x = Math.random() * 100;
+        const size = Math.random() * 1.5 + 1;
+        const duration = Math.random() * 25 + 15;
+        const delay = Math.random() * -25;
+        
+        star.style.left = `${x}vw`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDuration = `${duration}s`;
+        star.style.animationDelay = `${delay}s`;
+        
+        bg.appendChild(star);
+      }
+    }
+    createStars();
+
+    // Google OAuth Client ID - create one at https://console.cloud.google.com/apis/credentials
+    // (Authorized JavaScript origin must match the URL this page is hosted on, e.g. your GitHub Pages URL)
+    const GOOGLE_CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com";
+    const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov(?:\.my)?$/;
+
+    // Data Stores
+    let currentUserSession = null;
+    let movementRecords = [];
+    let staffProfiles = {}; // email -> { name, position }, captured once after first Google login
+
+    // Custom CSS blink styles
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `
+      @keyframes blink {
+        50% { opacity: 0.15; }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // Default Mock Movements (Adjusted to support new purposes Cuti Umum / Pelepasan)
+    const defaultMockData = [
+      {
+        nama: "Encik Mohamad Fauzi bin Suhaili",
+        tarikh: "2026-07-07",
+        destinasi: "SMK Dalat",
+        tujuan: "Pemantauan",
+        nota: "Pemantauan Pelaksanaan Program Pintar Kreatif Sektor Perancangan."
+      },
+      {
+        nama: "Puan Sharifah Noraini binti Wan Hamid",
+        tarikh: "2026-07-07",
+        destinasi: "SK Kampung Teh",
+        tujuan: "Mesyuarat",
+        nota: "Mesyuarat Penyelarasan Peningkatan Prasarana Sekolah Kurang Murid (SKM)."
+      },
+      {
+        nama: "Encik Ting Kah Chuan",
+        tarikh: "2026-07-08",
+        destinasi: "PPD Mukah",
+        tujuan: "Bengkel",
+        nota: "Menghadiri Bengkel Data Analitis Strategik Peringkat Bahagian Mukah."
+      },
+      {
+        nama: "Encik Mohamad Fauzi bin Suhaili",
+        tarikh: "2026-07-09",
+        destinasi: "SK St. Kevin Dalat",
+        tujuan: "Pelepasan",
+        nota: "Mendapat pelepasan awal menghadiri urusan keluarga penting."
+      },
+      {
+        nama: "Puan Sharifah Noraini binti Wan Hamid",
+        tarikh: "2026-07-10",
+        destinasi: "Seluruh Negara",
+        tujuan: "Cuti Umum",
+        nota: "Cuti Umum Khas Diisytiharkan Kerajaan."
+      }
+    ];
+
+    // Unique ID generator for movement records (avoids matching-by-value bugs on delete)
+    function generateId() {
+      return 'rec_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    }
+
+    // Initialization
+    function initSystem() {
+      // Load staff profiles (name + jawatan captured once after first Google login)
+      const profiles = localStorage.getItem('ppd_dalat_profiles');
+      staffProfiles = profiles ? JSON.parse(profiles) : {};
+
+      // Load session
+      const session = localStorage.getItem('ppd_dalat_session');
+      if (session) {
+        currentUserSession = JSON.parse(session);
+      }
+
+      // Load records
+      const storedRecords = localStorage.getItem('ppd_dalat_movements');
+      if (storedRecords) {
+        movementRecords = JSON.parse(storedRecords);
+      } else {
+        movementRecords = defaultMockData.map(r => ({ ...r, id: generateId() }));
+        localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
+      }
+
+      // Default Borang Date
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tarikh_pergerakan').value = today;
+
+      // Check Session Access
+      initGoogleSignIn();
+      evaluateSessionView();
+    }
+
+    // Bootstraps the "Sign in with Google" button (requires the page to be served over http(s),
+    // not opened as a local file:// - Google Identity Services will not initialize otherwise)
+    function initGoogleSignIn() {
+      const errorDiv = document.getElementById('login-error');
+      const errorTxt = document.getElementById('login-error-text');
+
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        errorTxt.textContent = "Perkhidmatan Log Masuk Google tidak dapat dimuatkan. Sila semak sambungan internet, atau akses laman ini melalui pautan https:// (bukan fail tempatan).";
+        errorDiv.style.display = 'flex';
+        return;
+      }
+
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
+      );
+    }
+
+    // Decodes a Google JWT credential (base64url) into its payload object
+    function decodeJwt(token) {
+      const payload = token.split('.')[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = decodeURIComponent(
+        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      );
+      return JSON.parse(decoded);
+    }
+
+    // AUTH HANDLING: Google Sign-In callback
+    function handleGoogleCredential(response) {
+      const errorDiv = document.getElementById('login-error');
+      const errorTxt = document.getElementById('login-error-text');
+      errorDiv.style.display = 'none';
+
+      let payload;
+      try {
+        payload = decodeJwt(response.credential);
+      } catch (e) {
+        errorTxt.textContent = "Gagal mengesahkan akaun Google. Sila cuba lagi.";
+        errorDiv.style.display = 'flex';
+        return;
+      }
+
+      const email = (payload.email || '').toLowerCase();
+      if (!payload.email_verified || !ALLOWED_EMAIL_REGEX.test(email)) {
+        errorTxt.textContent = "Akses disekat. Sila log masuk menggunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).";
+        errorDiv.style.display = 'flex';
+        return;
+      }
+
+      const existingProfile = staffProfiles[email];
+      currentUserSession = {
+        name: payload.name || email,
+        email: email,
+        picture: payload.picture || '',
+        position: existingProfile ? existingProfile.position : ''
+      };
+      localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
+
+      if (!existingProfile) {
+        // First-time login: ask for Jawatan before unlocking the dashboard
+        document.getElementById('view-google-login').style.display = 'none';
+        document.getElementById('view-complete-profile').style.display = 'block';
+        return;
+      }
+
+      showToast(`Log masuk berjaya! Selamat kembali, ${currentUserSession.name}.`, 'success');
+      evaluateSessionView();
+    }
+
+    // AUTH HANDLING: One-time Jawatan capture after first Google login
+    function handleCompleteProfile(event) {
+      event.preventDefault();
+      const position = document.getElementById('profile-position').value;
+
+      currentUserSession.position = position;
+      staffProfiles[currentUserSession.email] = { name: currentUserSession.name, position };
+      localStorage.setItem('ppd_dalat_profiles', JSON.stringify(staffProfiles));
+      localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
+
+      document.getElementById('view-complete-profile').style.display = 'none';
+      showToast(`Selamat datang, ${currentUserSession.name}!`, 'success');
+      evaluateSessionView();
+    }
+
+    // AUTH HANDLING: Log Keluar
+    function handleLogout() {
+      if (confirm("Adakah anda ingin log keluar dari sesi peranti ini?")) {
+        localStorage.removeItem('ppd_dalat_session');
+        currentUserSession = null;
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+          google.accounts.id.disableAutoSelect();
+        }
+        showToast("Anda telah berjaya log keluar dari orbit.", "success");
+        evaluateSessionView();
+      }
+    }
+
+    // Control UI rendering based on session state
+    function evaluateSessionView() {
+      const authPanel = document.getElementById('auth-panel');
+      const mainContent = document.getElementById('main-content');
+      const appNav = document.getElementById('app-nav');
+      const headerUserTag = document.getElementById('header-user-tag');
+      const loginView = document.getElementById('view-google-login');
+      const profileView = document.getElementById('view-complete-profile');
+
+      if (currentUserSession && currentUserSession.position) {
+        // Fully signed in with a Jawatan on file
+        authPanel.style.display = 'none';
+        mainContent.style.display = 'block';
+        appNav.style.display = 'flex';
+
+        // Show session banner
+        headerUserTag.style.display = 'flex';
+        document.getElementById('header-user-name').textContent = currentUserSession.name;
+        document.getElementById('header-user-pos').textContent = currentUserSession.position;
+
+        const avatar = document.getElementById('header-user-avatar');
+        const icon = document.getElementById('header-user-icon');
+        if (currentUserSession.picture) {
+          avatar.src = currentUserSession.picture;
+          avatar.style.display = 'inline-block';
+          icon.style.display = 'none';
+        } else {
+          avatar.style.display = 'none';
+          icon.style.display = 'inline-block';
+        }
+
+        // Auto-populate Borang officer name
+        document.getElementById('nama_pegawai').value = currentUserSession.name;
+
+        // Load modules state
+        updateDashboardStats();
+        populateTable();
+        renderCalendar();
+        updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
+        switchTab('utama');
+      } else if (currentUserSession && !currentUserSession.position) {
+        // Signed in with Google but hasn't completed the one-time Jawatan step yet
+        authPanel.style.display = 'block';
+        mainContent.style.display = 'none';
+        appNav.style.display = 'none';
+        headerUserTag.style.display = 'none';
+        loginView.style.display = 'none';
+        profileView.style.display = 'block';
+      } else {
+        // Logged out
+        authPanel.style.display = 'block';
+        mainContent.style.display = 'none';
+        appNav.style.display = 'none';
+        headerUserTag.style.display = 'none';
+        loginView.style.display = 'block';
+        profileView.style.display = 'none';
+      }
+    }
+
+    // SPA Tab Navigation Router
+    function switchTab(tabName) {
+      if (!currentUserSession) return;
+
+      const navButtons = document.querySelectorAll('nav .nav-btn');
+      navButtons.forEach(btn => {
+        if (btn.innerText.toLowerCase().includes(tabName === 'jana' ? 'jana' : tabName)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const cards = document.querySelectorAll('main .glass-card');
+      cards.forEach(card => {
+        card.classList.remove('active');
+        if (card.id === `tab-${tabName}`) {
+          card.classList.add('active');
+        }
+      });
+
+      if (tabName === 'analisis') {
+        populateTable();
+      } else if (tabName === 'kalendar') {
+        renderCalendar();
+      } else if (tabName === 'jana') {
+        updateJanaMetrics();
+      }
+    }
+
+    // Digital Clock
+    function updateClock() {
+      const clockElement = document.getElementById('digital-clock');
+      const dateElement = document.getElementById('digital-date');
+      if (!clockElement || !dateElement) return;
+
+      const now = new Date();
+      let hours = String(now.getHours()).padStart(2, '0');
+      let minutes = String(now.getMinutes()).padStart(2, '0');
+      let seconds = String(now.getSeconds()).padStart(2, '0');
+      clockElement.innerHTML = `${hours}<span style="color: var(--accent-cyan); animation: blink 1s step-end infinite;">:</span>${minutes}<span style="color: var(--accent-cyan); animation: blink 1s step-end infinite;">:</span>${seconds}`;
+
+      const daysMalay = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+      const monthsMalay = [
+        "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
+        "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+      ];
+      
+      dateElement.textContent = `${daysMalay[now.getDay()]}, ${now.getDate()} ${monthsMalay[now.getMonth()]} ${now.getFullYear()}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Stats
+    function updateDashboardStats() {
+      document.getElementById('stat-total-logs').textContent = movementRecords.length;
+
+      const todayString = new Date().toISOString().split('T')[0];
+      const activeTodayCount = movementRecords.filter(r => r.tarikh === todayString).length;
+      document.getElementById('stat-active-today').textContent = activeTodayCount;
+
+      const uniqueNames = [...new Set(movementRecords.map(r => r.nama.toLowerCase().trim()))];
+      document.getElementById('stat-unique-officers').textContent = uniqueNames.length;
+    }
+
+    function updateJanaMetrics() {
+      document.getElementById('metric-record-count').textContent = `${movementRecords.length} Rekod`;
+    }
+
+    // Form Submission
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      
+      const nama = document.getElementById('nama_pegawai').value.trim();
+      const tarikh = document.getElementById('tarikh_pergerakan').value;
+      const destinasi = document.getElementById('destinasi').value.trim();
+      const tujuan = document.getElementById('tujuan').value;
+      const nota = document.getElementById('nota').value.trim();
+
+      const record = { id: generateId(), nama, tarikh, destinasi, tujuan, nota };
+      movementRecords.push(record);
+      localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
+
+      // Reset fields but keep officer name defaulted
+      document.getElementById('destinasi').value = '';
+      document.getElementById('tujuan').value = '';
+      document.getElementById('nota').value = '';
+
+      updateDashboardStats();
+      showToast(`Pergerakan ${nama} berjaya dihantar ke log Sektor Perancangan!`, 'success');
+      
+      setTimeout(() => {
+        switchTab('analisis');
+      }, 1000);
+    }
+
+    // Dynamic Toasts
+    function showToast(message, type) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      
+      if (type === 'success') {
+        toast.style.borderColor = 'var(--success-green)';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success-green);"></i> <span>${message}</span>`;
+      } else {
+        toast.style.borderColor = 'var(--accent-pink)';
+        toast.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-pink);"></i> <span>${message}</span>`;
+      }
+
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 50);
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500);
+      }, 4000);
+    }
+
+    // Table view populator
+    function populateTable() {
+      const tbody = document.getElementById('table-body');
+      const emptyState = document.getElementById('table-empty-state');
+      
+      const sortedRecords = [...movementRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
+      tbody.innerHTML = '';
+      
+      if (sortedRecords.length === 0) {
+        emptyState.style.display = 'block';
+        document.getElementById('insights-panel').style.display = 'none';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      document.getElementById('insights-panel').style.display = 'block';
+
+      sortedRecords.forEach((record) => {
+        const tr = document.createElement('tr');
+        
+        let badgeClass = 'badge-lain';
+        const tj = record.tujuan.toLowerCase();
+        if (tj.includes('mesyuarat')) badgeClass = 'badge-mesyuarat';
+        else if (tj.includes('bengkel')) badgeClass = 'badge-bengkel';
+        else if (tj.includes('kursus')) badgeClass = 'badge-kursus';
+        else if (tj.includes('pemantauan')) badgeClass = 'badge-pemantauan';
+        else if (tj.includes('cuti umum')) badgeClass = 'badge-cuti-umum';
+        else if (tj.includes('pelepasan')) badgeClass = 'badge-pelepasan';
+        else if (tj.includes('cuti')) badgeClass = 'badge-cuti';
+
+        let displayDate = record.tarikh;
+        try {
+          const parts = record.tarikh.split('-');
+          if (parts.length === 3) displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } catch(e) {}
+
+        tr.innerHTML = `
+          <td style="font-weight:600; color: #fff;">${escapeHtml(record.nama)}</td>
+          <td>${displayDate}</td>
+          <td><i class="fa-solid fa-location-dot" style="color:var(--accent-cyan); margin-right:6px;"></i> ${escapeHtml(record.destinasi)}</td>
+          <td><span class="badge ${badgeClass}">${record.tujuan}</span></td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(record.nota || '-')}</td>
+          <td style="text-align: center;">
+            <button class="action-btn" onclick="deleteRecord('${record.id}')" title="Padam Rekod">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      renderInsights();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function filterTable() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const rows = document.querySelectorAll('#table-body tr');
+      let found = 0;
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(query)) {
+          row.style.display = '';
+          found++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      const emptyState = document.getElementById('table-empty-state');
+      if (found === 0 && movementRecords.length > 0) {
+        emptyState.style.display = 'block';
+      } else {
+        emptyState.style.display = 'none';
+      }
+    }
+
+    function deleteRecord(id) {
+      const index = movementRecords.findIndex(r => r.id === id);
+      if (index === -1) return;
+      const officer = movementRecords[index].nama;
+      movementRecords.splice(index, 1);
+      localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
+      showToast(`Rekod pergerakan ${officer} telah dikeluarkan dari pangkalan.`, 'warning');
+      
+      updateDashboardStats();
+      populateTable();
+      renderCalendar();
+    }
+
+    // Chart Insights (Updated for new Purposes)
+    function renderInsights() {
+      const container = document.getElementById('insights-bars');
+      container.innerHTML = '';
+
+      const tujuans = ["Mesyuarat", "Bengkel", "Kursus", "Pemantauan", "Cuti Umum", "Pelepasan", "Cuti", "Tugas Rasmi Lain"];
+      const counts = {};
+      tujuans.forEach(t => counts[t] = 0);
+
+      movementRecords.forEach(r => {
+        let match = "Tugas Rasmi Lain";
+        tujuans.forEach(t => {
+          if (r.tujuan.toLowerCase().includes(t.toLowerCase())) {
+            match = t;
+          }
+        });
+        counts[match]++;
+      });
+
+      const maxCount = Math.max(...Object.values(counts), 1);
+
+      tujuans.forEach(t => {
+        const count = counts[t];
+        const pct = (count / maxCount) * 100;
+
+        let color = '#2563eb';
+        if (t === "Mesyuarat") color = '#3b82f6';
+        else if (t === "Bengkel") color = '#a855f7';
+        else if (t === "Kursus") color = '#f59e0b';
+        else if (t === "Pemantauan") color = '#10b981';
+        else if (t === "Cuti Umum") color = '#64748b';
+        else if (t === "Pelepasan") color = '#06b6d4';
+        else if (t === "Cuti") color = '#eab308';
+        else color = '#f43f5e';
+
+        const group = document.createElement('div');
+        group.className = 'insight-bar-group';
+        group.innerHTML = `
+          <div class="insight-bar-lbl">${t}</div>
+          <div class="insight-bar-outer">
+            <div class="insight-bar-inner" style="width: 0%; background: ${color};" id="insight-bar-${t}"></div>
+          </div>
+          <div class="insight-bar-val">${count}</div>
+        `;
+        container.appendChild(group);
+
+        setTimeout(() => {
+          const bar = document.getElementById(`insight-bar-${t}`);
+          if (bar) bar.style.width = `${pct}%`;
+        }, 100);
+      });
+    }
+
+    // Calendar Visual Widget
+    let currentCalDate = new Date();
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-days-grid');
+      const title = document.getElementById('calendar-month-year');
+      if (!grid || !title) return;
+
+      grid.innerHTML = '';
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+
+      const monthsMalay = [
+        "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
+        "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+      ];
+      title.textContent = `${monthsMalay[month]} ${year}`;
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const prevLastDay = new Date(year, month, 0).getDate();
+
+      // Prev month days padding
+      for (let x = firstDayIndex; x > 0; x--) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = prevLastDay - x + 1;
+        grid.appendChild(div);
+      }
+
+      // Current month days
+      const today = new Date();
+      for (let i = 1; i <= lastDay; i++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day';
+        div.textContent = i;
+        
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(i).padStart(2, '0');
+        const checkDateString = `${year}-${monthStr}-${dayStr}`;
+
+        if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === i) {
+          div.classList.add('today');
+        }
+
+        const hasMove = movementRecords.some(r => r.tarikh === checkDateString);
+        if (hasMove) {
+          div.classList.add('has-movement');
+        }
+
+        div.onclick = () => {
+          document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
+          div.classList.add('selected');
+          updateSelectedDayEvents(checkDateString);
+        };
+
+        grid.appendChild(div);
+      }
+
+      // Next month padding days
+      const totalCells = firstDayIndex + lastDay;
+      const nextDays = 42 - totalCells;
+      for (let j = 1; j <= nextDays; j++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = j;
+        grid.appendChild(div);
+      }
+    }
+
+    function adjustMonth(offset) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+      renderCalendar();
+    }
+
+    function updateSelectedDayEvents(dateString) {
+      const title = document.getElementById('selected-day-title');
+      const list = document.getElementById('selected-day-list');
+      if (!title || !list) return;
+
+      let displayDate = dateString;
+      try {
+        const parts = dateString.split('-');
+        displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } catch(e) {}
+
+      title.textContent = `Pergerakan Tarikh: ${displayDate}`;
+      list.innerHTML = '';
+
+      const matched = movementRecords.filter(r => r.tarikh === dateString);
+
+      if (matched.length === 0) {
+        list.innerHTML = '<li style="padding: 10px 0; text-align:center;">Tiada pergerakan berjadual pada tarikh ini. Semua berada di pangkalan.</li>';
+        return;
+      }
+
+      matched.forEach(r => {
+        const li = document.createElement('li');
+        li.className = 'day-event-item';
+        li.innerHTML = `
+          <span class="day-event-name">${escapeHtml(r.nama)}</span>
+          <span class="day-event-dest"><i class="fa-solid fa-circle" style="font-size:5px; vertical-align:middle; margin-right:4px;"></i> ${escapeHtml(r.destinasi)} (${r.tujuan})</span>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    // Export to Excel using SheetJS
+    function exportToExcel() {
+      if (movementRecords.length === 0) {
+        showToast("Tiada rekod data pergerakan untuk dieksport!", "error");
+        return;
+      }
+
+      try {
+        const exportData = movementRecords.map(r => {
+          let dateFormatted = r.tarikh;
+          try {
+            const parts = r.tarikh.split('-');
+            dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          } catch(e) {}
+          
+          return {
+            "NAMA PEGAWAI": r.nama,
+            "TARIKH PERGERAKAN": dateFormatted,
+            "DESTINASI / LOKASI": r.destinasi,
+            "TUJUAN MISI": r.tujuan,
+            "NOTA TAMBAHAN / AGENDA": r.nota || "-"
+          };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        ws['!cols'] = [
+          { wch: 35 }, // Nama Pegawai
+          { wch: 18 }, // Tarikh
+          { wch: 25 }, // Destinasi
+          { wch: 18 }, // Tujuan
+          { wch: 45 }  // Nota
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Log Pergerakan");
+
+        XLSX.writeFile(wb, "Log_Pergerakan_Sektor_Perancangan_Dalat.xlsx");
+        showToast("Fail Excel berjaya dijana dan dimuat turun!", "success");
+      } catch (err) {
+        console.error(err);
+        showToast("Kegagalan menjana fail Excel. Sila cuba lagi.", "error");
+      }
+    }
+
+    // Reset All System Local Data
+    function resetSystemData() {
+      if (confirm("Adakah anda pasti untuk menetapkan semula sistem? Semua data pergerakan akan diset semula ke keadaan asal.")) {
+        localStorage.removeItem('ppd_dalat_movements');
+        movementRecords = defaultMockData.map(r => ({ ...r, id: generateId() }));
+        localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
+        
+        updateDashboardStats();
+        populateTable();
+        renderCalendar();
+        updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
+        updateJanaMetrics();
+        showToast("Sistem data orbit diset semula ke rekod asal.", "warning");
+      }
+    }
+
+    // Window load trigger
+    window.onload = () => {
+      initSystem();
+    };
+  </script>
+</body>
+</html>

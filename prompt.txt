@@ -1,0 +1,27 @@
+Act as an experienced website designer and developer. 
+Create a complete, single-file web application (HTML, CSS, and JavaScript combined) for a staff movement tracker. 
+
+Project Name: Sistem Penjejak Pergerakan Sektor Perancangan PPD Dalat.
+
+Theme & Design (Antigravity):
+- The website must have an "Antigravity" theme. Use CSS keyframe animations to make the navigation buttons, content containers, and icons continuously float or sway up and down as if in zero gravity.
+- The UI should be highly colorful, modern, and attractive, using a space-inspired gradient background (deep blues, glowing neon accents).
+- It must be fully responsive, easy to navigate, and scale well.
+
+Technical Requirements:
+- Do not use a backend server or database. The site must run simply by double-clicking the HTML file (no localhost required).
+- Use an array in JavaScript to temporarily store form submissions while the page is open.
+- Include a CDN link to SheetJS (or similar library) to allow users to export the stored data directly into a .xlsx Excel file from the browser.
+
+Pages/Sections Required (Implement as a Single Page Application using JavaScript to toggle visibility):
+1. Utama (Home): A welcoming page explaining the system.
+2. Kalendar: Display a real-time running clock and today's date.
+3. Borang Pergerakan: A form to record movement. Fields should include: Nama Pegawai, Tarikh, Destinasi/Lokasi, Tujuan (Dropdown), and Nota.
+4. Analisis Pergerakan: A table that displays the data submitted from the form.
+5. Jana Pergerakan: A page with a button that generates and downloads a .xlsx Excel file containing all the submitted table data.
+
+Characters & Explanations:
+- On every single page, include a funny, floating character (using emojis like 🧑‍🚀, 👽, 🛸, 🛰️, ☄️).
+- Each character must give a very simple, creative, and humorous explanation of what that specific page does, fitting the antigravity/space theme.
+
+Output only the raw, complete HTML code (including the CSS and JS inside it) so I can copy, paste, and run it immediately.
