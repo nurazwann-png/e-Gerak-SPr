@@ -1,20 +1,21 @@
-// Local backend for e-Gerak SPR - lets multiple devices/browsers share the
-// same movement records instead of each keeping its own localStorage copy.
+// Backend for e-Gerak SPR - lets multiple devices/browsers share the same
+// movement records instead of each keeping its own localStorage copy.
 //
 // Uses only Node's built-in http + node:sqlite modules - no npm install needed.
 // Run with: node server/server.js  (requires Node 22.5+)
 //
-// NOTE: this binds to localhost only, so it's reachable from THIS machine
-// only (matching "test it on my machine" scope). To let other devices on the
-// network reach it, this would need to listen on 0.0.0.0 and the frontend's
-// API_BASE would need to point at this machine's LAN IP instead of localhost.
+// Local dev: binds to all interfaces on port 3001, DB file lives next to this script.
+// Deployed (e.g. Railway): set the PORT env var (the host usually sets this for you)
+// and DB_PATH to a path inside a mounted persistent volume, e.g. /data/movements.db -
+// without a persistent volume, the database resets on every redeploy/restart.
 
 const http = require('node:http');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
-const PORT = 3001;
-const db = new DatabaseSync(path.join(__dirname, 'movements.db'));
+const PORT = process.env.PORT || 3001;
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'movements.db');
+const db = new DatabaseSync(DB_PATH);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS movements (
@@ -126,6 +127,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, 'localhost', () => {
-  console.log(`e-Gerak SPR backend listening on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`e-Gerak SPR backend listening on port ${PORT}`);
 });

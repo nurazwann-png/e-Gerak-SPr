@@ -1,0 +1,12 @@
+{
+  "name": "e-gerak-spr-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend for e-Gerak SPR PPD Dalat - shares movement records across devices",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server/server.js"
+  }
+}
