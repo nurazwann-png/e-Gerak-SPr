@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ppd-dalat-v4';
+const CACHE_NAME = 'ppd-dalat-v5';
 
 const APP_SHELL = [
   './',
@@ -25,6 +25,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
+
+  // Backend API calls (shared movement data): never cache these - the whole
+  // point is other devices' changes must show up, so always hit the network.
+  const requestUrl = new URL(request.url);
+  if (requestUrl.pathname.startsWith('/api/')) return;
 
   // App page itself: try the network first so staff always get the latest
   // version when online, but fall back to the cached copy when offline.

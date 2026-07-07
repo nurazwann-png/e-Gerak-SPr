@@ -1649,6 +1649,12 @@
 
     const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov(?:\.my)?$/;
 
+    // Local backend (see server/server.js) - shares movement records across
+    // devices instead of each browser keeping its own localStorage copy.
+    // Only reachable from this machine for now; update this URL once the
+    // backend is deployed somewhere reachable by other devices.
+    const API_BASE = 'http://localhost:3001/api';
+
     // Data Stores
     let currentUserSession = null;
     let movementRecords = [];
@@ -1669,17 +1675,33 @@
       return 'rec_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
     }
 
+    // Fetches the shared record list from the local backend. Every device
+    // pointed at the same backend sees the same data this way.
+    async function loadMovementsFromServer(silent) {
+      try {
+        const res = await fetch(`${API_BASE}/movements`);
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        movementRecords = await res.json();
+        return true;
+      } catch (err) {
+        console.error('Failed to reach backend:', err);
+        if (!silent) {
+          showToast('Tidak dapat berhubung dengan pelayan pangkalan data. Pastikan "node server/server.js" sedang berjalan.', 'error');
+        }
+        return false;
+      }
+    }
+
     // Initialization
-    function initSystem() {
+    async function initSystem() {
       // Load session
       const session = localStorage.getItem('ppd_dalat_session');
       if (session) {
         currentUserSession = JSON.parse(session);
       }
 
-      // Load records - fresh installs start empty, no sample/demo data
-      const storedRecords = localStorage.getItem('ppd_dalat_movements');
-      movementRecords = storedRecords ? JSON.parse(storedRecords) : [];
+      // Load the shared record list from the backend (fresh installs start empty)
+      await loadMovementsFromServer();
 
       // Default Borang Date
       const today = new Date().toISOString().split('T')[0];
@@ -1694,11 +1716,18 @@
       // Check Session Access
       evaluateSessionView();
 
-      // Keep the Analisis view's day/week/month/year boundaries accurate even if
-      // the tab is left open across a period rollover (e.g. into a new week).
-      setInterval(() => {
-        if (currentUserSession) populateTable();
-      }, 5 * 60 * 1000);
+      // Poll the backend so entries submitted from other devices/tabs show up
+      // here too, and keep the Analisis view's day/week/month/year boundaries
+      // accurate even if the tab is left open across a period rollover.
+      setInterval(async () => {
+        if (!currentUserSession) return;
+        const changed = await loadMovementsFromServer(true);
+        if (changed) {
+          updateDashboardStats();
+          populateTable();
+          renderCalendar();
+        }
+      }, 10 * 1000);
     }
 
     // AUTH HANDLING: Simple identification (no password, no external service)
@@ -1855,9 +1884,9 @@
     }
 
     // Form Submission
-    function handleFormSubmit(event) {
+    async function handleFormSubmit(event) {
       event.preventDefault();
-      
+
       const nama = document.getElementById('nama_pegawai').value.trim();
       const tarikh = document.getElementById('tarikh_pergerakan').value;
       const destinasi = document.getElementById('destinasi').value.trim();
@@ -1865,20 +1894,32 @@
       const nota = document.getElementById('nota').value.trim();
 
       const record = { id: generateId(), nama, tarikh, destinasi, tujuan, nota, submittedBy: currentUserSession.email };
-      movementRecords.push(record);
-      localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
 
-      // Reset fields but keep officer name defaulted
-      document.getElementById('destinasi').value = '';
-      document.getElementById('tujuan').value = '';
-      document.getElementById('nota').value = '';
+      try {
+        const res = await fetch(`${API_BASE}/movements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-      updateDashboardStats();
-      showToast(`Pergerakan ${nama} berjaya dihantar ke log Sektor Perancangan!`, 'success');
-      
-      setTimeout(() => {
-        switchTab('analisis');
-      }, 1000);
+        movementRecords.push(record);
+
+        // Reset fields but keep officer name defaulted
+        document.getElementById('destinasi').value = '';
+        document.getElementById('tujuan').value = '';
+        document.getElementById('nota').value = '';
+
+        updateDashboardStats();
+        showToast(`Pergerakan ${nama} berjaya dihantar ke log Sektor Perancangan!`, 'success');
+
+        setTimeout(() => {
+          switchTab('analisis');
+        }, 1000);
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menghantar pergerakan. Sila semak sambungan ke pelayan pangkalan data.', 'error');
+      }
     }
 
     // Dynamic Toasts
@@ -2063,7 +2104,7 @@
       }
     }
 
-    function deleteRecord(id) {
+    async function deleteRecord(id) {
       const index = movementRecords.findIndex(r => r.id === id);
       if (index === -1) return;
 
@@ -2074,14 +2115,24 @@
         return;
       }
 
-      const officer = record.nama;
-      movementRecords.splice(index, 1);
-      localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
-      showToast(`Rekod pergerakan ${officer} telah dikeluarkan dari pangkalan.`, 'warning');
-      
-      updateDashboardStats();
-      populateTable();
-      renderCalendar();
+      try {
+        // The backend re-checks ownership server-side too (real enforcement,
+        // unlike a client-only check which anyone could bypass via devtools).
+        const url = `${API_BASE}/movements/${encodeURIComponent(id)}?email=${encodeURIComponent(currentUserSession.email)}`;
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        const officer = record.nama;
+        movementRecords.splice(index, 1);
+        showToast(`Rekod pergerakan ${officer} telah dikeluarkan dari pangkalan.`, 'warning');
+
+        updateDashboardStats();
+        populateTable();
+        renderCalendar();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memadam rekod. Sila semak sambungan ke pelayan pangkalan data.', 'error');
+      }
     }
 
     // Chart Insights (Updated for new Purposes)
@@ -2292,17 +2343,25 @@
     }
 
     // Reset All System Local Data
-    function resetSystemData() {
-      if (confirm("Adakah anda pasti untuk memadamkan KESEMUA rekod pergerakan yang tersimpan? Tindakan ini tidak boleh dibatalkan.")) {
-        movementRecords = [];
-        localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
+    async function resetSystemData() {
+      if (!confirm("Adakah anda pasti untuk memadamkan KESEMUA rekod pergerakan yang tersimpan? Tindakan ini tidak boleh dibatalkan.")) {
+        return;
+      }
 
+      try {
+        const res = await fetch(`${API_BASE}/movements`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        movementRecords = [];
         updateDashboardStats();
         populateTable();
         renderCalendar();
         updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
         updateJanaMetrics();
         showToast("Semua data pergerakan telah dipadamkan.", "warning");
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menetapkan semula. Sila semak sambungan ke pelayan pangkalan data.', 'error');
       }
     }
 
