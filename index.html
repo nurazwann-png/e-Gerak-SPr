@@ -851,6 +851,45 @@
       transition: all 0.25s ease;
     }
 
+    .period-filter {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .period-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .period-btn:hover {
+      color: #fff;
+      border-color: rgba(37, 99, 235, 0.3);
+    }
+
+    .period-btn.active {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(6, 182, 212, 0.15) 100%);
+      border-color: var(--primary-blue);
+      box-shadow: var(--glow-blue);
+      color: #fff;
+    }
+
+    .period-range {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
     .search-input:focus {
       outline: none;
       border-color: var(--secondary-blue);
@@ -1468,6 +1507,16 @@
           </div>
         </div>
 
+        <!-- Period Filter (defaults to weekly - recalculates automatically as time passes) -->
+        <div class="period-filter" id="period-filter">
+          <button class="period-btn" data-period="day" onclick="setAnalysisPeriod('day')">Hari</button>
+          <button class="period-btn" data-period="week" onclick="setAnalysisPeriod('week')">Minggu</button>
+          <button class="period-btn" data-period="month" onclick="setAnalysisPeriod('month')">Bulan</button>
+          <button class="period-btn" data-period="year" onclick="setAnalysisPeriod('year')">Tahun</button>
+          <button class="period-btn" data-period="all" onclick="setAnalysisPeriod('all')">Semua</button>
+          <span class="period-range" id="period-range-label"></span>
+        </div>
+
         <!-- Glowing Table -->
         <div class="table-container">
           <table id="movement-table">
@@ -1490,7 +1539,7 @@
           <div class="empty-state" id="table-empty-state" style="display: none;">
             <i class="fa-solid fa-ghost"></i>
             <h3>Tiada Log Pergerakan Dijumpai</h3>
-            <p>Semua pegawai berada di pangkalan utama (PPD Dalat) atau carian anda tiada padanan.</p>
+            <p id="table-empty-desc">Semua pegawai berada di pangkalan utama (PPD Dalat) atau carian anda tiada padanan.</p>
           </div>
         </div>
 
@@ -1520,8 +1569,18 @@
             <i class="fa-solid fa-satellite fa-3x" style="color: var(--accent-cyan); margin-bottom: 1rem; animation: float-fast 5s ease-in-out infinite;"></i>
             <h2 style="font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; color:#fff;">Pemancar Dokumen Excel</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
-              Fail Excel yang dijana mengandungi kesemua log data pergerakan sektor perancangan yang disimpan dalam ingatan pelayar ini.
+              Fail Excel yang dijana mengandungi log data pergerakan sektor perancangan bagi tempoh yang dipilih di bawah.
             </p>
+
+            <!-- Export Period Filter (independent of the Analisis tab's filter) -->
+            <div class="period-filter" id="export-period-filter" style="justify-content: center; margin-bottom: 0.5rem;">
+              <button class="period-btn" data-period="day" onclick="setExportPeriod('day')">Hari</button>
+              <button class="period-btn" data-period="week" onclick="setExportPeriod('week')">Minggu</button>
+              <button class="period-btn" data-period="month" onclick="setExportPeriod('month')">Bulan</button>
+              <button class="period-btn" data-period="year" onclick="setExportPeriod('year')">Tahun</button>
+              <button class="period-btn" data-period="all" onclick="setExportPeriod('all')">Semua</button>
+            </div>
+            <div class="period-range" id="export-range-label" style="display: block; margin-bottom: 1.25rem;"></div>
 
             <div class="teleport-grid">
               <div class="teleport-metric">
@@ -1593,6 +1652,8 @@
     // Data Stores
     let currentUserSession = null;
     let movementRecords = [];
+    let currentAnalysisPeriod = 'week';
+    let currentExportPeriod = 'all';
 
     // Custom CSS blink styles
     const styleSheet = document.createElement("style");
@@ -1602,45 +1663,6 @@
       }
     `;
     document.head.appendChild(styleSheet);
-
-    // Default Mock Movements (Adjusted to support new purposes Cuti Umum / Pelepasan)
-    const defaultMockData = [
-      {
-        nama: "Encik Mohamad Fauzi bin Suhaili",
-        tarikh: "2026-07-07",
-        destinasi: "SMK Dalat",
-        tujuan: "Pemantauan",
-        nota: "Pemantauan Pelaksanaan Program Pintar Kreatif Sektor Perancangan."
-      },
-      {
-        nama: "Puan Sharifah Noraini binti Wan Hamid",
-        tarikh: "2026-07-07",
-        destinasi: "SK Kampung Teh",
-        tujuan: "Mesyuarat",
-        nota: "Mesyuarat Penyelarasan Peningkatan Prasarana Sekolah Kurang Murid (SKM)."
-      },
-      {
-        nama: "Encik Ting Kah Chuan",
-        tarikh: "2026-07-08",
-        destinasi: "PPD Mukah",
-        tujuan: "Bengkel",
-        nota: "Menghadiri Bengkel Data Analitis Strategik Peringkat Bahagian Mukah."
-      },
-      {
-        nama: "Encik Mohamad Fauzi bin Suhaili",
-        tarikh: "2026-07-09",
-        destinasi: "SK St. Kevin Dalat",
-        tujuan: "Pelepasan",
-        nota: "Mendapat pelepasan awal menghadiri urusan keluarga penting."
-      },
-      {
-        nama: "Puan Sharifah Noraini binti Wan Hamid",
-        tarikh: "2026-07-10",
-        destinasi: "Seluruh Negara",
-        tujuan: "Cuti Umum",
-        nota: "Cuti Umum Khas Diisytiharkan Kerajaan."
-      }
-    ];
 
     // Unique ID generator for movement records (avoids matching-by-value bugs on delete)
     function generateId() {
@@ -1655,21 +1677,28 @@
         currentUserSession = JSON.parse(session);
       }
 
-      // Load records
+      // Load records - fresh installs start empty, no sample/demo data
       const storedRecords = localStorage.getItem('ppd_dalat_movements');
-      if (storedRecords) {
-        movementRecords = JSON.parse(storedRecords);
-      } else {
-        movementRecords = defaultMockData.map(r => ({ ...r, id: generateId() }));
-        localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
-      }
+      movementRecords = storedRecords ? JSON.parse(storedRecords) : [];
 
       // Default Borang Date
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('tarikh_pergerakan').value = today;
 
+      // Remember the last e-mel used to sign in, so the identify form isn't blank next time
+      const rememberedEmail = localStorage.getItem('ppd_dalat_remembered_email');
+      if (rememberedEmail) {
+        document.getElementById('identify-email').value = rememberedEmail;
+      }
+
       // Check Session Access
       evaluateSessionView();
+
+      // Keep the Analisis view's day/week/month/year boundaries accurate even if
+      // the tab is left open across a period rollover (e.g. into a new week).
+      setInterval(() => {
+        if (currentUserSession) populateTable();
+      }, 5 * 60 * 1000);
     }
 
     // AUTH HANDLING: Simple identification (no password, no external service)
@@ -1691,6 +1720,7 @@
 
       currentUserSession = { name, email, position };
       localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
+      localStorage.setItem('ppd_dalat_remembered_email', email);
 
       showToast(`Selamat datang, ${currentUserSession.name}!`, 'success');
       evaluateSessionView();
@@ -1807,8 +1837,21 @@
       document.getElementById('stat-unique-officers').textContent = uniqueNames.length;
     }
 
+    function setExportPeriod(period) {
+      currentExportPeriod = period;
+      updateJanaMetrics();
+    }
+
     function updateJanaMetrics() {
-      document.getElementById('metric-record-count').textContent = `${movementRecords.length} Rekod`;
+      document.querySelectorAll('#export-period-filter .period-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.period === currentExportPeriod);
+      });
+
+      const rangeLabel = document.getElementById('export-range-label');
+      if (rangeLabel) rangeLabel.textContent = formatPeriodRangeLabel(currentExportPeriod);
+
+      const filteredCount = movementRecords.filter((r) => isRecordInPeriod(r, currentExportPeriod)).length;
+      document.getElementById('metric-record-count').textContent = `${filteredCount} Rekod`;
     }
 
     // Form Submission
@@ -1861,17 +1904,88 @@
       }, 4000);
     }
 
+    // Analysis period filtering (Hari / Minggu / Bulan / Tahun / Semua)
+    function parseLocalDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getPeriodRange(period, reference = new Date()) {
+      if (period === 'all') return null;
+
+      const start = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate());
+      let end;
+
+      if (period === 'day') {
+        end = new Date(start);
+        end.setDate(end.getDate() + 1);
+      } else if (period === 'week') {
+        start.setDate(start.getDate() - start.getDay()); // roll back to Ahad (Sunday)
+        end = new Date(start);
+        end.setDate(end.getDate() + 7);
+      } else if (period === 'month') {
+        start.setDate(1);
+        end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+      } else if (period === 'year') {
+        start.setMonth(0, 1);
+        end = new Date(start.getFullYear() + 1, 0, 1);
+      }
+
+      return { start, end };
+    }
+
+    function isRecordInPeriod(record, period) {
+      const range = getPeriodRange(period);
+      if (!range) return true; // 'all'
+      const recordDate = parseLocalDate(record.tarikh);
+      return recordDate >= range.start && recordDate < range.end;
+    }
+
+    function formatPeriodRangeLabel(period) {
+      if (period === 'all') return 'Sepanjang masa';
+
+      const monthsShort = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"];
+      const fmt = (d) => `${String(d.getDate()).padStart(2, '0')} ${monthsShort[d.getMonth()]}`;
+
+      const range = getPeriodRange(period);
+      const endInclusive = new Date(range.end);
+      endInclusive.setDate(endInclusive.getDate() - 1);
+
+      if (period === 'day') return `${fmt(range.start)} ${range.start.getFullYear()}`;
+      if (period === 'year') return `Tahun ${range.start.getFullYear()}`;
+      return `${fmt(range.start)} - ${fmt(endInclusive)} ${endInclusive.getFullYear()}`;
+    }
+
+    function setAnalysisPeriod(period) {
+      currentAnalysisPeriod = period;
+      populateTable();
+    }
+
     // Table view populator
     function populateTable() {
+      // Reflect the active period filter in the pill buttons + range label
+      document.querySelectorAll('.period-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.period === currentAnalysisPeriod);
+      });
+      const rangeLabel = document.getElementById('period-range-label');
+      if (rangeLabel) rangeLabel.textContent = formatPeriodRangeLabel(currentAnalysisPeriod);
+
       const tbody = document.getElementById('table-body');
       const emptyState = document.getElementById('table-empty-state');
-      
-      const sortedRecords = [...movementRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
+      const emptyDesc = document.getElementById('table-empty-desc');
+
+      const periodRecords = movementRecords.filter((r) => isRecordInPeriod(r, currentAnalysisPeriod));
+      const sortedRecords = [...periodRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
       tbody.innerHTML = '';
-      
+
       if (sortedRecords.length === 0) {
         emptyState.style.display = 'block';
         document.getElementById('insights-panel').style.display = 'none';
+        if (emptyDesc) {
+          emptyDesc.textContent = movementRecords.length === 0
+            ? 'Semua pegawai berada di pangkalan utama (PPD Dalat).'
+            : `Tiada log pergerakan bagi tempoh ini (${formatPeriodRangeLabel(currentAnalysisPeriod)}).`;
+        }
         return;
       }
       
@@ -1918,7 +2032,7 @@
         tbody.appendChild(tr);
       });
 
-      renderInsights();
+      renderInsights(periodRecords);
     }
 
     function escapeHtml(str) {
@@ -1971,7 +2085,7 @@
     }
 
     // Chart Insights (Updated for new Purposes)
-    function renderInsights() {
+    function renderInsights(records) {
       const container = document.getElementById('insights-bars');
       container.innerHTML = '';
 
@@ -1979,7 +2093,7 @@
       const counts = {};
       tujuans.forEach(t => counts[t] = 0);
 
-      movementRecords.forEach(r => {
+      records.forEach(r => {
         let match = "Tugas Rasmi Lain";
         tujuans.forEach(t => {
           if (r.tujuan.toLowerCase().includes(t.toLowerCase())) {
@@ -2132,13 +2246,15 @@
 
     // Export to Excel using SheetJS
     function exportToExcel() {
-      if (movementRecords.length === 0) {
-        showToast("Tiada rekod data pergerakan untuk dieksport!", "error");
+      const exportRecords = movementRecords.filter((r) => isRecordInPeriod(r, currentExportPeriod));
+
+      if (exportRecords.length === 0) {
+        showToast("Tiada rekod data pergerakan untuk dieksport bagi tempoh ini!", "error");
         return;
       }
 
       try {
-        const exportData = movementRecords.map(r => {
+        const exportData = exportRecords.map(r => {
           let dateFormatted = r.tarikh;
           try {
             const parts = r.tarikh.split('-');
@@ -2166,7 +2282,8 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Log Pergerakan");
 
-        XLSX.writeFile(wb, "Log_Pergerakan_Sektor_Perancangan_Dalat.xlsx");
+        const periodSuffix = { day: 'Harian', week: 'Mingguan', month: 'Bulanan', year: 'Tahunan', all: 'Semua' }[currentExportPeriod];
+        XLSX.writeFile(wb, `Log_Pergerakan_Sektor_Perancangan_Dalat_${periodSuffix}.xlsx`);
         showToast("Fail Excel berjaya dijana dan dimuat turun!", "success");
       } catch (err) {
         console.error(err);
@@ -2176,17 +2293,16 @@
 
     // Reset All System Local Data
     function resetSystemData() {
-      if (confirm("Adakah anda pasti untuk menetapkan semula sistem? Semua data pergerakan akan diset semula ke keadaan asal.")) {
-        localStorage.removeItem('ppd_dalat_movements');
-        movementRecords = defaultMockData.map(r => ({ ...r, id: generateId() }));
+      if (confirm("Adakah anda pasti untuk memadamkan KESEMUA rekod pergerakan yang tersimpan? Tindakan ini tidak boleh dibatalkan.")) {
+        movementRecords = [];
         localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
-        
+
         updateDashboardStats();
         populateTable();
         renderCalendar();
         updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
         updateJanaMetrics();
-        showToast("Sistem data orbit diset semula ke rekod asal.", "warning");
+        showToast("Semua data pergerakan telah dipadamkan.", "warning");
       }
     }
 
