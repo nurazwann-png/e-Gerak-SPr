@@ -16,9 +16,6 @@
   <!-- SheetJS (XLSX) CDN -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Google Identity Services (Sign in with Google) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <style>
     /* Global Variables & Professional Slate Color Palette */
     :root {
@@ -1190,8 +1187,7 @@
 
     <!-- Active User Session Badge (Updated dynamically in JS) -->
     <div class="user-profile-tag" id="header-user-tag" style="display: none;">
-      <img id="header-user-avatar" src="" alt="" style="width: 22px; height: 22px; border-radius: 50%; display: none;">
-      <i class="fa-solid fa-circle-user" id="header-user-icon" style="color: var(--accent-cyan);"></i>
+      <i class="fa-solid fa-circle-user" style="color: var(--accent-cyan);"></i>
       <span id="header-user-name">User</span>
       <span class="user-position" id="header-user-pos">Penolong Pegawai Pendidikan</span>
       <button class="logout-btn" onclick="handleLogout()" title="Log Keluar">
@@ -1222,40 +1218,40 @@
   <!-- Main Workspace -->
   <main>
 
-    <!-- AUTHENTICATION PANEL: GOOGLE SIGN-IN -->
+    <!-- AUTHENTICATION PANEL: SIMPLE IDENTIFICATION (no password, no external service) -->
     <div class="auth-container" id="auth-panel">
-
-      <!-- VIEW: GOOGLE LOGIN -->
-      <div class="auth-card" id="view-google-login">
+      <div class="auth-card" id="view-identify">
         <div class="auth-header">
-          <h2>Log Masuk Pegawai</h2>
-          <p>Log masuk menggunakan akaun Google rasmi MOE anda</p>
+          <h2>Kenal Pasti Pegawai</h2>
+          <p>Sila nyatakan maklumat ringkas anda untuk meneruskan</p>
         </div>
 
         <div class="error-msg" id="login-error">
           <i class="fa-solid fa-triangle-exclamation"></i>
-          <span id="login-error-text">Akaun Google ini bukan akaun rasmi MOE.</span>
+          <span id="login-error-text">Sila gunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).</span>
         </div>
 
-        <div id="google-signin-button" style="display: flex; justify-content: center; margin-top: 1.5rem;"></div>
-
-        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
-          Hanya akaun e-mel berakhiran <strong>@moe.gov.my</strong> atau <strong>@moe.gov</strong> dibenarkan log masuk.
-        </p>
-      </div>
-
-      <!-- VIEW: ONE-TIME PROFILE COMPLETION (Jawatan) -->
-      <div class="auth-card" id="view-complete-profile" style="display: none;">
-        <div class="auth-header">
-          <h2>Lengkapkan Profil</h2>
-          <p>Sebelum meneruskan, sila nyatakan jawatan anda</p>
-        </div>
-
-        <form onsubmit="handleCompleteProfile(event)">
+        <form onsubmit="handleIdentifySubmit(event)">
           <div class="form-group">
-            <label class="form-label" for="profile-position">Jawatan</label>
+            <label class="form-label" for="identify-name">Nama Penuh</label>
             <div class="input-wrapper">
-              <select class="form-select" id="profile-position" required>
+              <input class="form-input" type="text" id="identify-name" placeholder="Cth: Encik Mohamad Fauzi bin Suhaili" required>
+              <i class="fa-solid fa-user"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="identify-email">Alamat E-mel (MOE)</label>
+            <div class="input-wrapper">
+              <input class="form-input" type="email" id="identify-email" placeholder="nama@moe.gov.my" required>
+              <i class="fa-solid fa-envelope"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="identify-position">Jawatan</label>
+            <div class="input-wrapper">
+              <select class="form-select" id="identify-position" required>
                 <option value="" disabled selected>Pilih Jawatan...</option>
                 <option value="Penolong Pegawai Pendidikan">Penolong Pegawai Pendidikan</option>
                 <option value="Timbalan Sektor Perancangan">Timbalan Sektor Perancangan</option>
@@ -1266,11 +1262,14 @@
           </div>
 
           <button type="submit" class="submit-btn">
-            <i class="fa-solid fa-check"></i> Teruskan ke Pangkalan Orbit
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Pangkalan Orbit
           </button>
         </form>
-      </div>
 
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
+          Hanya akaun e-mel berakhiran <strong>@moe.gov.my</strong> atau <strong>@moe.gov</strong> dibenarkan meneruskan.
+        </p>
+      </div>
     </div>
 
     <!-- MAIN DASHBOARD CONTENT (Locked behind auth session) -->
@@ -1575,15 +1574,11 @@
     }
     createStars();
 
-    // Google OAuth Client ID - create one at https://console.cloud.google.com/apis/credentials
-    // (Authorized JavaScript origin must match the URL this page is hosted on, e.g. your GitHub Pages URL)
-    const GOOGLE_CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com";
     const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov(?:\.my)?$/;
 
     // Data Stores
     let currentUserSession = null;
     let movementRecords = [];
-    let staffProfiles = {}; // email -> { name, position }, captured once after first Google login
 
     // Custom CSS blink styles
     const styleSheet = document.createElement("style");
@@ -1640,10 +1635,6 @@
 
     // Initialization
     function initSystem() {
-      // Load staff profiles (name + jawatan captured once after first Google login)
-      const profiles = localStorage.getItem('ppd_dalat_profiles');
-      staffProfiles = profiles ? JSON.parse(profiles) : {};
-
       // Load session
       const session = localStorage.getItem('ppd_dalat_session');
       if (session) {
@@ -1664,96 +1655,29 @@
       document.getElementById('tarikh_pergerakan').value = today;
 
       // Check Session Access
-      initGoogleSignIn();
       evaluateSessionView();
     }
 
-    // Bootstraps the "Sign in with Google" button (requires the page to be served over http(s),
-    // not opened as a local file:// - Google Identity Services will not initialize otherwise)
-    function initGoogleSignIn() {
-      const errorDiv = document.getElementById('login-error');
-      const errorTxt = document.getElementById('login-error-text');
-
-      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-        errorTxt.textContent = "Perkhidmatan Log Masuk Google tidak dapat dimuatkan. Sila semak sambungan internet, atau akses laman ini melalui pautan https:// (bukan fail tempatan).";
-        errorDiv.style.display = 'flex';
-        return;
-      }
-
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential
-      });
-
-      google.accounts.id.renderButton(
-        document.getElementById('google-signin-button'),
-        { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
-      );
-    }
-
-    // Decodes a Google JWT credential (base64url) into its payload object
-    function decodeJwt(token) {
-      const payload = token.split('.')[1];
-      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = decodeURIComponent(
-        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      );
-      return JSON.parse(decoded);
-    }
-
-    // AUTH HANDLING: Google Sign-In callback
-    function handleGoogleCredential(response) {
+    // AUTH HANDLING: Simple identification (no password, no external service)
+    function handleIdentifySubmit(event) {
+      event.preventDefault();
       const errorDiv = document.getElementById('login-error');
       const errorTxt = document.getElementById('login-error-text');
       errorDiv.style.display = 'none';
 
-      let payload;
-      try {
-        payload = decodeJwt(response.credential);
-      } catch (e) {
-        errorTxt.textContent = "Gagal mengesahkan akaun Google. Sila cuba lagi.";
+      const name = document.getElementById('identify-name').value.trim();
+      const email = document.getElementById('identify-email').value.trim().toLowerCase();
+      const position = document.getElementById('identify-position').value;
+
+      if (!ALLOWED_EMAIL_REGEX.test(email)) {
+        errorTxt.textContent = "Akses disekat. Sila gunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).";
         errorDiv.style.display = 'flex';
         return;
       }
 
-      const email = (payload.email || '').toLowerCase();
-      if (!payload.email_verified || !ALLOWED_EMAIL_REGEX.test(email)) {
-        errorTxt.textContent = "Akses disekat. Sila log masuk menggunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).";
-        errorDiv.style.display = 'flex';
-        return;
-      }
-
-      const existingProfile = staffProfiles[email];
-      currentUserSession = {
-        name: payload.name || email,
-        email: email,
-        picture: payload.picture || '',
-        position: existingProfile ? existingProfile.position : ''
-      };
+      currentUserSession = { name, email, position };
       localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
 
-      if (!existingProfile) {
-        // First-time login: ask for Jawatan before unlocking the dashboard
-        document.getElementById('view-google-login').style.display = 'none';
-        document.getElementById('view-complete-profile').style.display = 'block';
-        return;
-      }
-
-      showToast(`Log masuk berjaya! Selamat kembali, ${currentUserSession.name}.`, 'success');
-      evaluateSessionView();
-    }
-
-    // AUTH HANDLING: One-time Jawatan capture after first Google login
-    function handleCompleteProfile(event) {
-      event.preventDefault();
-      const position = document.getElementById('profile-position').value;
-
-      currentUserSession.position = position;
-      staffProfiles[currentUserSession.email] = { name: currentUserSession.name, position };
-      localStorage.setItem('ppd_dalat_profiles', JSON.stringify(staffProfiles));
-      localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
-
-      document.getElementById('view-complete-profile').style.display = 'none';
       showToast(`Selamat datang, ${currentUserSession.name}!`, 'success');
       evaluateSessionView();
     }
@@ -1763,9 +1687,6 @@
       if (confirm("Adakah anda ingin log keluar dari sesi peranti ini?")) {
         localStorage.removeItem('ppd_dalat_session');
         currentUserSession = null;
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-          google.accounts.id.disableAutoSelect();
-        }
         showToast("Anda telah berjaya log keluar dari orbit.", "success");
         evaluateSessionView();
       }
@@ -1777,11 +1698,9 @@
       const mainContent = document.getElementById('main-content');
       const appNav = document.getElementById('app-nav');
       const headerUserTag = document.getElementById('header-user-tag');
-      const loginView = document.getElementById('view-google-login');
-      const profileView = document.getElementById('view-complete-profile');
 
-      if (currentUserSession && currentUserSession.position) {
-        // Fully signed in with a Jawatan on file
+      if (currentUserSession) {
+        // Identified - unlock the dashboard
         authPanel.style.display = 'none';
         mainContent.style.display = 'block';
         appNav.style.display = 'flex';
@@ -1790,17 +1709,6 @@
         headerUserTag.style.display = 'flex';
         document.getElementById('header-user-name').textContent = currentUserSession.name;
         document.getElementById('header-user-pos').textContent = currentUserSession.position;
-
-        const avatar = document.getElementById('header-user-avatar');
-        const icon = document.getElementById('header-user-icon');
-        if (currentUserSession.picture) {
-          avatar.src = currentUserSession.picture;
-          avatar.style.display = 'inline-block';
-          icon.style.display = 'none';
-        } else {
-          avatar.style.display = 'none';
-          icon.style.display = 'inline-block';
-        }
 
         // Auto-populate Borang officer name
         document.getElementById('nama_pegawai').value = currentUserSession.name;
@@ -1811,22 +1719,12 @@
         renderCalendar();
         updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
         switchTab('utama');
-      } else if (currentUserSession && !currentUserSession.position) {
-        // Signed in with Google but hasn't completed the one-time Jawatan step yet
-        authPanel.style.display = 'block';
-        mainContent.style.display = 'none';
-        appNav.style.display = 'none';
-        headerUserTag.style.display = 'none';
-        loginView.style.display = 'none';
-        profileView.style.display = 'block';
       } else {
-        // Logged out
+        // Not identified yet
         authPanel.style.display = 'block';
         mainContent.style.display = 'none';
         appNav.style.display = 'none';
         headerUserTag.style.display = 'none';
-        loginView.style.display = 'block';
-        profileView.style.display = 'none';
       }
     }
 
