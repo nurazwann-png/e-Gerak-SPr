@@ -1821,7 +1821,7 @@
       const tujuan = document.getElementById('tujuan').value;
       const nota = document.getElementById('nota').value.trim();
 
-      const record = { id: generateId(), nama, tarikh, destinasi, tujuan, nota };
+      const record = { id: generateId(), nama, tarikh, destinasi, tujuan, nota, submittedBy: currentUserSession.email };
       movementRecords.push(record);
       localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
 
@@ -1897,6 +1897,14 @@
           if (parts.length === 3) displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
         } catch(e) {}
 
+        // Staff can see every officer's movements, but may only delete entries they submitted themselves
+        const isOwnRecord = record.submittedBy && currentUserSession && record.submittedBy === currentUserSession.email;
+        const deleteCell = isOwnRecord
+          ? `<button class="action-btn" onclick="deleteRecord('${record.id}')" title="Padam Rekod">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>`
+          : `<i class="fa-solid fa-lock" style="color: rgba(255,255,255,0.15);" title="Hanya penghantar asal boleh memadam rekod ini"></i>`;
+
         tr.innerHTML = `
           <td style="font-weight:600; color: #fff;">${escapeHtml(record.nama)}</td>
           <td>${displayDate}</td>
@@ -1904,9 +1912,7 @@
           <td><span class="badge ${badgeClass}">${record.tujuan}</span></td>
           <td style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(record.nota || '-')}</td>
           <td style="text-align: center;">
-            <button class="action-btn" onclick="deleteRecord('${record.id}')" title="Padam Rekod">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
+            ${deleteCell}
           </td>
         `;
         tbody.appendChild(tr);
@@ -1946,7 +1952,15 @@
     function deleteRecord(id) {
       const index = movementRecords.findIndex(r => r.id === id);
       if (index === -1) return;
-      const officer = movementRecords[index].nama;
+
+      const record = movementRecords[index];
+      const isOwnRecord = record.submittedBy && currentUserSession && record.submittedBy === currentUserSession.email;
+      if (!isOwnRecord) {
+        showToast('Anda hanya boleh memadam rekod yang anda hantar sendiri.', 'error');
+        return;
+      }
+
+      const officer = record.nama;
       movementRecords.splice(index, 1);
       localStorage.setItem('ppd_dalat_movements', JSON.stringify(movementRecords));
       showToast(`Rekod pergerakan ${officer} telah dikeluarkan dari pangkalan.`, 'warning');
