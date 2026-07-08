@@ -1,21 +1,61 @@
-// Backend for e-Gerak SPR - lets multiple devices/browsers share the same
-// movement records instead of each keeping its own localStorage copy.
+// Backend + static file server for e-Gerak SPR - one process serves both the
+// app (index.html, manifest, icons) and the shared /api/movements data, so
+// staff on other devices just need one URL, e.g. http://<this-pc's-LAN-IP>:3001
+// (find that IP with `ipconfig` on Windows), rather than running two servers.
 //
-// Uses only Node's built-in http + node:sqlite modules - no npm install needed.
+// Uses only Node's built-in http + fs + node:sqlite modules - no npm install needed.
 // Run with: node server/server.js  (requires Node 22.5+)
 //
-// Local dev: binds to all interfaces on port 3001, DB file lives next to this script.
+// Local/LAN use: binds to all interfaces on port 3001, DB file lives next to this
+// script. Make sure Windows Firewall allows inbound connections on this port so
+// other devices on the same Wi-Fi/LAN can reach it.
+//
 // Deployed (e.g. Railway): set the PORT env var (the host usually sets this for you)
 // and DB_PATH to a path inside a mounted persistent volume, e.g. /data/movements.db -
 // without a persistent volume, the database resets on every redeploy/restart.
 
 const http = require('node:http');
+const fs = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3001;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'movements.db');
 const db = new DatabaseSync(DB_PATH);
+
+// The frontend files (index.html, manifest.json, sw.js, icons/) live one
+// level up from this script, at the project root.
+const STATIC_ROOT = path.join(__dirname, '..');
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon'
+};
+
+function serveStatic(req, res, pathname) {
+  const relativePath = pathname === '/' ? '/index.html' : pathname;
+  const fullPath = path.join(STATIC_ROOT, relativePath);
+
+  // Guard against path traversal (e.g. "/../server/server.js")
+  if (!fullPath.startsWith(STATIC_ROOT)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  fs.readFile(fullPath, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      return;
+    }
+    const contentType = MIME_TYPES[path.extname(fullPath)] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS movements (
@@ -117,6 +157,12 @@ const server = http.createServer(async (req, res) => {
 
       db.prepare('DELETE FROM movements WHERE id = ?').run(id);
       sendJSON(res, 200, { ok: true });
+      return;
+    }
+
+    // Anything else (GET requests for the page/assets) - serve the frontend files
+    if (!url.pathname.startsWith('/api/') && (req.method === 'GET' || req.method === 'HEAD')) {
+      serveStatic(req, res, url.pathname);
       return;
     }
 

@@ -1649,11 +1649,12 @@
 
     const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov(?:\.my)?$/;
 
-    // Local backend (see server/server.js) - shares movement records across
-    // devices instead of each browser keeping its own localStorage copy.
-    // Only reachable from this machine for now; update this URL once the
-    // backend is deployed somewhere reachable by other devices.
-    const API_BASE = 'http://localhost:3001/api';
+    // Backend (see server/server.js) - shares movement records across devices
+    // instead of each browser keeping its own localStorage copy. Relative path
+    // works whether this page is opened via http://localhost:3001,
+    // http://<this-pc's-LAN-IP>:3001 from another device, or a deployed host -
+    // since server.js now serves this page itself, API calls stay same-origin.
+    const API_BASE = '/api';
 
     // Data Stores
     let currentUserSession = null;
