@@ -5,7 +5,7 @@ menggunakan Streamlit + SQLite. Berkongsi pangkalan data yang sama dengan
 sistem Node.js/HTML sedia ada (server/movements.db), jadi kedua-dua sistem
 boleh berjalan serentak dan berkongsi rekod yang sama.
 
-Jalankan dengan: streamlit run streamlit_app/app.py
+Jalankan dengan: streamlit run app.py
 """
 
 import io

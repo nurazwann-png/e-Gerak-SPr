@@ -18,7 +18,7 @@ import time
 
 PREFERRED_DB_PATH = os.environ.get(
     "DB_PATH",
-    os.path.join(os.path.dirname(__file__), "..", "server", "movements.db"),
+    os.path.join(os.path.dirname(__file__), "server", "movements.db"),
 )
 FALLBACK_DB_PATH = os.path.join(tempfile.gettempdir(), "e_gerak_spr_movements.db")
 
