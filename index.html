@@ -1281,7 +1281,7 @@
 
         <div class="error-msg" id="login-error">
           <i class="fa-solid fa-triangle-exclamation"></i>
-          <span id="login-error-text">Sila gunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).</span>
+          <span id="login-error-text">Sila gunakan e-mel rasmi MOE (@moe.gov.my).</span>
         </div>
 
         <form onsubmit="handleIdentifySubmit(event)">
@@ -1306,8 +1306,6 @@
             <div class="input-wrapper">
               <select class="form-select" id="identify-position" required>
                 <option value="" disabled selected>Pilih Jawatan...</option>
-                <option value="Penolong Pegawai Pendidikan">Penolong Pegawai Pendidikan</option>
-                <option value="Timbalan Sektor Perancangan">Timbalan Sektor Perancangan</option>
               </select>
               <i class="fa-solid fa-briefcase"></i>
               <i class="fa-solid fa-chevron-down select-arrow"></i>
@@ -1320,8 +1318,159 @@
         </form>
 
         <p style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
-          Hanya akaun e-mel berakhiran <strong>@moe.gov.my</strong> atau <strong>@moe.gov</strong> dibenarkan meneruskan.
+          Hanya akaun e-mel berakhiran <strong>@moe.gov.my</strong> dibenarkan meneruskan. Kali pertama log masuk akan mendaftarkan anda secara automatik.
         </p>
+
+        <p style="text-align: center; margin-top: 0.75rem; font-size: 0.78rem;">
+          <a href="#" class="auth-toggle-link" onclick="showAdminPinView(event)">Masuk sebagai Admin</a>
+        </p>
+      </div>
+
+      <!-- VIEW: ADMIN PIN GATE (separate from the staff roster entirely, so the
+           first admin can get in and add staff before anyone is on the roster) -->
+      <div class="auth-card" id="view-admin-pin" style="display: none;">
+        <div class="auth-header">
+          <h2>Akses Admin</h2>
+          <p>Masukkan PIN admin untuk meneruskan</p>
+        </div>
+
+        <div class="error-msg" id="admin-pin-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>PIN admin tidak sah.</span>
+        </div>
+
+        <form onsubmit="handleAdminPinSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="admin-pin-input">PIN Admin</label>
+            <div class="input-wrapper">
+              <input class="form-input" type="password" id="admin-pin-input" placeholder="••••••••••••" required>
+              <i class="fa-solid fa-key"></i>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fa-solid fa-unlock"></i> Buka Panel Admin
+          </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem;">
+          <a href="#" class="auth-toggle-link" onclick="showIdentifyView(event)">Kembali ke Log Masuk Staf</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL (unlocked via PIN, entirely separate from the staff session) -->
+    <div id="admin-panel" style="display: none; width: 100%;">
+      <div class="glass-card active" id="tab-admin-dashboard">
+        <div class="character-guide">
+          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛡️</div>
+          <div class="character-speech">
+            <strong>Marshal Kawalan:</strong> "Selamat datang, Admin! Dari sini anda boleh urus staf, jawatan, semak statistik setiap pegawai, dan lihat log audit sistem."
+          </div>
+        </div>
+
+        <div class="analysis-header">
+          <h2 class="analysis-title"><i class="fa-solid fa-shield-halved"></i> Panel Admin</h2>
+          <button class="logout-btn" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px; color: var(--text-muted);" onclick="handleAdminLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Log Keluar Admin
+          </button>
+        </div>
+
+        <!-- Tambah / Padam Pengguna -->
+        <div class="insights-panel">
+          <div class="insights-title"><i class="fa-solid fa-users"></i> Urus Staf (Tambah / Padam Pengguna)</div>
+
+          <form onsubmit="handleAddStaff(event)" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 1.25rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="staff-nama">Nama</label>
+              <input class="form-input" style="padding-left: 14px;" type="text" id="staff-nama" placeholder="Nama penuh" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="staff-email">E-mel</label>
+              <input class="form-input" style="padding-left: 14px;" type="email" id="staff-email" placeholder="nama@moe.gov.my" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="staff-jawatan">Jawatan</label>
+              <select class="form-select" style="padding-left: 14px;" id="staff-jawatan" required>
+                <option value="" disabled selected>Pilih...</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top: 0; width: auto; padding: 12px 20px;">
+              <i class="fa-solid fa-user-plus"></i> Tambah
+            </button>
+          </form>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>E-mel</th>
+                  <th>Jawatan</th>
+                  <th style="width: 60px; text-align: center;">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="staff-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Urus Senarai Jawatan -->
+        <div class="insights-panel">
+          <div class="insights-title"><i class="fa-solid fa-briefcase"></i> Urus Senarai Jawatan</div>
+
+          <form onsubmit="handleAddJawatan(event)" style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
+            <input class="form-input" style="padding-left: 14px;" type="text" id="jawatan-input" placeholder="Cth: Ketua Unit ICT" required>
+            <button type="submit" class="submit-btn" style="margin-top: 0; width: auto; padding: 12px 20px; white-space: nowrap;">
+              <i class="fa-solid fa-plus"></i> Tambah Jawatan
+            </button>
+          </form>
+
+          <div id="jawatan-list-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+
+        <!-- Statistik Setiap Pengguna -->
+        <div class="insights-panel">
+          <div class="insights-title"><i class="fa-solid fa-chart-column"></i> Statistik Pergerakan Setiap Pengguna</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama Pegawai</th>
+                  <th>E-mel</th>
+                  <th>Jumlah Rekod</th>
+                  <th>Tujuan Paling Kerap</th>
+                </tr>
+              </thead>
+              <tbody id="user-stats-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Urus Sebarang Rekod (admin boleh padam rekod sesiapa sahaja) -->
+        <div class="insights-panel">
+          <div class="insights-title"><i class="fa-solid fa-table-list"></i> Urus Sebarang Rekod Pergerakan</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama Pegawai</th>
+                  <th>Tarikh</th>
+                  <th>Destinasi</th>
+                  <th>Tujuan</th>
+                  <th style="width: 60px; text-align: center;">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="admin-records-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Log Audit -->
+        <div class="insights-panel">
+          <div class="insights-title"><i class="fa-solid fa-clipboard-list"></i> Log Audit</div>
+          <ul class="day-events-list" id="audit-log-list"></ul>
+        </div>
       </div>
     </div>
 
@@ -1647,7 +1796,7 @@
     }
     createStars();
 
-    const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov(?:\.my)?$/;
+    const ALLOWED_EMAIL_REGEX = /^[^@]+@moe\.gov\.my$/;
 
     // Backend (see server/server.js) - shares movement records across devices
     // instead of each browser keeping its own localStorage copy. Relative path
@@ -1661,6 +1810,7 @@
     let movementRecords = [];
     let currentAnalysisPeriod = 'week';
     let currentExportPeriod = 'all';
+    let adminPin = null; // set once the admin PIN is verified with the server, kept in memory only
 
     // Custom CSS blink styles
     const styleSheet = document.createElement("style");
@@ -1693,6 +1843,30 @@
       }
     }
 
+    // Loads the admin-managed jawatan list into a <select> element (the identify
+    // form, and the admin "add staff" form both use this).
+    async function loadJawatanOptions(selectId) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      try {
+        const res = await fetch(`${API_BASE}/jawatan`);
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const jawatanList = await res.json();
+
+        const currentValue = select.value;
+        select.innerHTML = '<option value="" disabled selected>Pilih Jawatan...</option>';
+        jawatanList.forEach((jawatan) => {
+          const option = document.createElement('option');
+          option.value = jawatan;
+          option.textContent = jawatan;
+          select.appendChild(option);
+        });
+        if (jawatanList.includes(currentValue)) select.value = currentValue;
+      } catch (err) {
+        console.error('Failed to load jawatan list:', err);
+      }
+    }
+
     // Initialization
     async function initSystem() {
       // Load session
@@ -1703,6 +1877,7 @@
 
       // Load the shared record list from the backend (fresh installs start empty)
       await loadMovementsFromServer();
+      await loadJawatanOptions('identify-position');
 
       // Default Borang Date
       const today = new Date().toISOString().split('T')[0];
@@ -1732,7 +1907,7 @@
     }
 
     // AUTH HANDLING: Simple identification (no password, no external service)
-    function handleIdentifySubmit(event) {
+    async function handleIdentifySubmit(event) {
       event.preventDefault();
       const errorDiv = document.getElementById('login-error');
       const errorTxt = document.getElementById('login-error-text');
@@ -1743,7 +1918,29 @@
       const position = document.getElementById('identify-position').value;
 
       if (!ALLOWED_EMAIL_REGEX.test(email)) {
-        errorTxt.textContent = "Akses disekat. Sila gunakan e-mel rasmi MOE (@moe.gov.my atau @moe.gov).";
+        errorTxt.textContent = "Akses disekat. Sila gunakan e-mel rasmi MOE (@moe.gov.my).";
+        errorDiv.style.display = 'flex';
+        return;
+      }
+
+      try {
+        const checkRes = await fetch(`${API_BASE}/staff/check?email=${encodeURIComponent(email)}`);
+        const { allowed } = await checkRes.json();
+
+        // First time seeing this e-mail - register them automatically. Admins
+        // can still add staff ahead of time, or remove someone, from the
+        // Admin panel regardless of this self-service path.
+        if (!allowed) {
+          const registerRes = await fetch(`${API_BASE}/staff/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, nama: name, jawatan: position })
+          });
+          if (!registerRes.ok) throw new Error(`Server returned ${registerRes.status}`);
+        }
+      } catch (err) {
+        console.error(err);
+        errorTxt.textContent = "Tidak dapat mendaftar/mengesahkan akses. Sila semak sambungan ke pelayan pangkalan data.";
         errorDiv.style.display = 'flex';
         return;
       }
@@ -1766,12 +1963,315 @@
       }
     }
 
+    // ===== ADMIN PANEL =====
+    // Entirely separate from the regular staff session/roster - gated only by
+    // a shared PIN, so the first admin can get in and add staff before anyone
+    // else is on the roster.
+
+    function showAdminPinView(event) {
+      event.preventDefault();
+      document.getElementById('view-identify').style.display = 'none';
+      document.getElementById('view-admin-pin').style.display = 'block';
+      document.getElementById('admin-pin-error').style.display = 'none';
+    }
+
+    function showIdentifyView(event) {
+      event.preventDefault();
+      document.getElementById('view-admin-pin').style.display = 'none';
+      document.getElementById('view-identify').style.display = 'block';
+    }
+
+    async function handleAdminPinSubmit(event) {
+      event.preventDefault();
+      const errorDiv = document.getElementById('admin-pin-error');
+      errorDiv.style.display = 'none';
+
+      const pin = document.getElementById('admin-pin-input').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+        const { ok } = await res.json();
+
+        if (!ok) {
+          errorDiv.style.display = 'flex';
+          return;
+        }
+
+        adminPin = pin;
+        document.getElementById('admin-pin-input').value = '';
+        document.getElementById('auth-panel').style.display = 'none';
+        document.getElementById('app-nav').style.display = 'none';
+        document.getElementById('header-user-tag').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        loadAdminDashboard();
+      } catch (err) {
+        console.error(err);
+        showToast('Tidak dapat berhubung dengan pelayan pangkalan data.', 'error');
+      }
+    }
+
+    function handleAdminLogout() {
+      adminPin = null;
+      document.getElementById('admin-panel').style.display = 'none';
+      showIdentifyView({ preventDefault: () => {} });
+      evaluateSessionView();
+    }
+
+    async function loadAdminDashboard() {
+      await Promise.all([
+        renderStaffTable(),
+        loadJawatanOptions('staff-jawatan').then(renderJawatanList),
+        renderUserStats(),
+        renderAdminRecordsTable(),
+        renderAuditLog()
+      ]);
+    }
+
+    // --- Staf (roster) ---
+    async function renderStaffTable() {
+      const tbody = document.getElementById('staff-table-body');
+      try {
+        const res = await fetch(`${API_BASE}/admin/staff?pin=${encodeURIComponent(adminPin)}`);
+        const staffList = await res.json();
+
+        tbody.innerHTML = staffList.map((s) => `
+          <tr>
+            <td style="font-weight:600; color:#fff;">${escapeHtml(s.nama)}</td>
+            <td>${escapeHtml(s.email)}</td>
+            <td>${escapeHtml(s.jawatan)}</td>
+            <td style="text-align:center;">
+              <button class="action-btn" onclick="deleteStaffMember('${s.email}')" title="Padam Pengguna">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Tiada staf didaftarkan lagi.</td></tr>';
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Gagal memuatkan senarai staf.</td></tr>';
+      }
+    }
+
+    async function handleAddStaff(event) {
+      event.preventDefault();
+      const nama = document.getElementById('staff-nama').value.trim();
+      const email = document.getElementById('staff-email').value.trim().toLowerCase();
+      const jawatan = document.getElementById('staff-jawatan').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/staff`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: adminPin, nama, email, jawatan })
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        document.getElementById('staff-nama').value = '';
+        document.getElementById('staff-email').value = '';
+        document.getElementById('staff-jawatan').value = '';
+
+        showToast(`Staf ${nama} berjaya ditambah.`, 'success');
+        renderStaffTable();
+        renderAuditLog();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menambah staf.', 'error');
+      }
+    }
+
+    async function deleteStaffMember(email) {
+      if (!confirm(`Padam akses staf ${email}? Mereka tidak akan dapat log masuk lagi.`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/staff/${encodeURIComponent(email)}?pin=${encodeURIComponent(adminPin)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        showToast('Akses staf telah dipadamkan.', 'warning');
+        renderStaffTable();
+        renderAuditLog();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memadam staf.', 'error');
+      }
+    }
+
+    // --- Senarai Jawatan ---
+    async function renderJawatanList() {
+      const container = document.getElementById('jawatan-list-container');
+      try {
+        const res = await fetch(`${API_BASE}/jawatan`);
+        const jawatanList = await res.json();
+
+        container.innerHTML = jawatanList.map((j) => `
+          <span class="badge badge-lain" style="display:inline-flex; align-items:center; gap:8px;">
+            ${escapeHtml(j)}
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="deleteJawatanOption('${j.replace(/'/g, "\\'")}')" title="Padam Jawatan"></i>
+          </span>
+        `).join('') || '<span style="color:var(--text-muted); font-size:0.85rem;">Tiada jawatan disenaraikan.</span>';
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">Gagal memuatkan senarai jawatan.</span>';
+      }
+    }
+
+    async function handleAddJawatan(event) {
+      event.preventDefault();
+      const input = document.getElementById('jawatan-input');
+      const jawatan = input.value.trim();
+      if (!jawatan) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/jawatan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: adminPin, jawatan })
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        input.value = '';
+        showToast(`Jawatan "${jawatan}" berjaya ditambah.`, 'success');
+        renderJawatanList();
+        loadJawatanOptions('staff-jawatan');
+        renderAuditLog();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menambah jawatan.', 'error');
+      }
+    }
+
+    async function deleteJawatanOption(jawatan) {
+      if (!confirm(`Padam pilihan jawatan "${jawatan}"?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/jawatan/${encodeURIComponent(jawatan)}?pin=${encodeURIComponent(adminPin)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        showToast('Pilihan jawatan telah dipadamkan.', 'warning');
+        renderJawatanList();
+        loadJawatanOptions('staff-jawatan');
+        renderAuditLog();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memadam jawatan.', 'error');
+      }
+    }
+
+    // --- Statistik setiap pengguna (dikira daripada data pergerakan sedia ada) ---
+    async function renderUserStats() {
+      const tbody = document.getElementById('user-stats-table-body');
+      await loadMovementsFromServer(true);
+
+      const byUser = {};
+      movementRecords.forEach((r) => {
+        const key = r.submittedBy || 'tidak diketahui';
+        if (!byUser[key]) byUser[key] = { nama: r.nama, email: key, count: 0, tujuanCounts: {} };
+        byUser[key].count++;
+        byUser[key].tujuanCounts[r.tujuan] = (byUser[key].tujuanCounts[r.tujuan] || 0) + 1;
+      });
+
+      const rows = Object.values(byUser).sort((a, b) => b.count - a.count);
+
+      tbody.innerHTML = rows.map((u) => {
+        const topTujuan = Object.entries(u.tujuanCounts).sort((a, b) => b[1] - a[1])[0];
+        return `
+          <tr>
+            <td style="font-weight:600; color:#fff;">${escapeHtml(u.nama)}</td>
+            <td>${escapeHtml(u.email)}</td>
+            <td>${u.count}</td>
+            <td>${topTujuan ? escapeHtml(topTujuan[0]) + ` (${topTujuan[1]})` : '-'}</td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Tiada data pergerakan lagi.</td></tr>';
+    }
+
+    // --- Urus sebarang rekod (admin boleh padam rekod sesiapa sahaja) ---
+    async function renderAdminRecordsTable() {
+      const tbody = document.getElementById('admin-records-table-body');
+      const sorted = [...movementRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
+
+      tbody.innerHTML = sorted.map((r) => {
+        let displayDate = r.tarikh;
+        try {
+          const parts = r.tarikh.split('-');
+          if (parts.length === 3) displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } catch (e) {}
+
+        return `
+          <tr>
+            <td style="font-weight:600; color:#fff;">${escapeHtml(r.nama)}</td>
+            <td>${displayDate}</td>
+            <td>${escapeHtml(r.destinasi)}</td>
+            <td>${escapeHtml(r.tujuan)}</td>
+            <td style="text-align:center;">
+              <button class="action-btn" onclick="adminDeleteRecord('${r.id}')" title="Padam Rekod">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Tiada rekod pergerakan lagi.</td></tr>';
+    }
+
+    async function adminDeleteRecord(id) {
+      if (!confirm('Padam rekod ini secara kekal? Tindakan ini akan dicatat dalam log audit.')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/movements/${encodeURIComponent(id)}?pin=${encodeURIComponent(adminPin)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        showToast('Rekod telah dipadamkan oleh admin.', 'warning');
+        await loadMovementsFromServer(true);
+        renderAdminRecordsTable();
+        renderUserStats();
+        renderAuditLog();
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memadam rekod.', 'error');
+      }
+    }
+
+    // --- Log Audit ---
+    async function renderAuditLog() {
+      const list = document.getElementById('audit-log-list');
+      try {
+        const res = await fetch(`${API_BASE}/admin/audit?pin=${encodeURIComponent(adminPin)}`);
+        const entries = await res.json();
+
+        list.innerHTML = entries.map((e) => {
+          const when = new Date(e.performedAt).toLocaleString('ms-MY');
+          return `
+            <li class="day-event-item">
+              <span class="day-event-name">${escapeHtml(e.detail)}</span>
+              <span class="day-event-dest">${when}</span>
+            </li>
+          `;
+        }).join('') || '<li style="padding: 10px 0; text-align:center; color:var(--text-muted);">Tiada aktiviti admin direkodkan lagi.</li>';
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = '<li style="padding: 10px 0; text-align:center; color:var(--text-muted);">Gagal memuatkan log audit.</li>';
+      }
+    }
+
     // Control UI rendering based on session state
     function evaluateSessionView() {
       const authPanel = document.getElementById('auth-panel');
       const mainContent = document.getElementById('main-content');
       const appNav = document.getElementById('app-nav');
       const headerUserTag = document.getElementById('header-user-tag');
+
+      // Always leave the separate admin panel closed when re-evaluating the
+      // regular staff session (e.g. after admin logout or on page load).
+      document.getElementById('admin-panel').style.display = 'none';
 
       if (currentUserSession) {
         // Identified - unlock the dashboard
@@ -1815,7 +2315,7 @@
         }
       });
 
-      const cards = document.querySelectorAll('main .glass-card');
+      const cards = document.querySelectorAll('#main-content .glass-card');
       cards.forEach(card => {
         card.classList.remove('active');
         if (card.id === `tab-${tabName}`) {
