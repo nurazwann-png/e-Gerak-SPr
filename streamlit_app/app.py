@@ -608,6 +608,8 @@ def main():
             format_func=lambda p: f"{icons[p]}  {p}",
             label_visibility="collapsed",
         )
+        if db.is_using_fallback_storage():
+            st.caption("⚠️ Storan sementara pada hos ini - data akan reset bila app dimulakan semula.")
 
     nav = st.session_state.nav
     if nav == "Utama":

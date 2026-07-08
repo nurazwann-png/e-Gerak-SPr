@@ -1,39 +1,76 @@
 """SQLite data layer for the e-Gerak SPR Streamlit app.
 
-Reads and writes the SAME database file used by the existing Node.js
-backend (server/server.js / server/movements.db), so records created by
-either system are visible to both. Schema matches server/server.js exactly.
+Prefers the SAME database file used by the existing Node.js backend
+(server/server.js / server/movements.db), so records created by either
+system are visible to both. Schema matches server/server.js exactly.
+
+Some hosts (e.g. Streamlit Community Cloud) mount the app source
+read-only, so that path can't be created/written there. In that case we
+fall back to a writable temp-directory database - see _resolve_db_path().
 """
 
 import os
 import random
 import sqlite3
 import string
+import tempfile
 import time
 
-DB_PATH = os.environ.get(
+PREFERRED_DB_PATH = os.environ.get(
     "DB_PATH",
     os.path.join(os.path.dirname(__file__), "..", "server", "movements.db"),
 )
+FALLBACK_DB_PATH = os.path.join(tempfile.gettempdir(), "e_gerak_spr_movements.db")
+
+_resolved_db_path = None
+_using_fallback = False
+
+SCHEMA = """
+    CREATE TABLE IF NOT EXISTS movements (
+        id TEXT PRIMARY KEY,
+        nama TEXT NOT NULL,
+        tarikh TEXT NOT NULL,
+        destinasi TEXT NOT NULL,
+        tujuan TEXT NOT NULL,
+        nota TEXT,
+        submittedBy TEXT NOT NULL
+    )
+"""
+
+
+def _connect(path):
+    conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
+    conn.execute(SCHEMA)
+    return conn
+
+
+def _resolve_db_path():
+    """Picks PREFERRED_DB_PATH if writable, otherwise a temp-dir fallback.
+
+    Cached for the life of the process so we don't retry a known-broken
+    path (and its OperationalError) on every rerun.
+    """
+    global _resolved_db_path, _using_fallback
+    if _resolved_db_path is not None:
+        return _resolved_db_path
+    try:
+        os.makedirs(os.path.dirname(PREFERRED_DB_PATH), exist_ok=True)
+        _connect(PREFERRED_DB_PATH).close()
+        _resolved_db_path = PREFERRED_DB_PATH
+    except (sqlite3.OperationalError, OSError):
+        _resolved_db_path = FALLBACK_DB_PATH
+        _using_fallback = True
+    return _resolved_db_path
+
+
+def is_using_fallback_storage():
+    _resolve_db_path()
+    return _using_fallback
 
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS movements (
-            id TEXT PRIMARY KEY,
-            nama TEXT NOT NULL,
-            tarikh TEXT NOT NULL,
-            destinasi TEXT NOT NULL,
-            tujuan TEXT NOT NULL,
-            nota TEXT,
-            submittedBy TEXT NOT NULL
-        )
-        """
-    )
-    return conn
+    return _connect(_resolve_db_path())
 
 
 def generate_id():
