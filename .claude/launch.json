@@ -12,6 +12,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server/server.js"],
       "port": 3001
+    },
+    {
+      "name": "streamlit-app",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "streamlit", "run", "streamlit_app/app.py", "--server.headless", "true", "--server.port", "8501"],
+      "port": 8501
     }
   ]
 }
