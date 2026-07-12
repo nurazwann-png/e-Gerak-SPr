@@ -1506,13 +1506,6 @@
     <!-- ADMIN PANEL (unlocked via PIN, entirely separate from the staff session) -->
     <div id="admin-panel" style="display: none; width: 100%;">
       <div class="glass-card active" id="tab-admin-dashboard">
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛡️</div>
-          <div class="character-speech">
-            <strong>Marshal Kawalan:</strong> "Selamat datang, Admin! Dari sini anda boleh urus staf, jawatan, semak statistik setiap pegawai, dan lihat log audit sistem."
-          </div>
-        </div>
-
         <div class="analysis-header">
           <h2 class="analysis-title"><i class="fa-solid fa-shield-halved"></i> Panel Admin</h2>
           <button class="logout-btn" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px; color: var(--text-muted);" onclick="handleAdminLogout()">
@@ -1623,14 +1616,6 @@
 
       <!-- SECTION: UTAMA (HOME) -->
       <div class="glass-card active" id="tab-utama">
-        <!-- Character Guide -->
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">🧑‍🚀</div>
-          <div class="character-speech">
-            <strong>Kapt. Astro-Dalat:</strong> "Selamat datang ke Utama! Saya adalah pegawai pemantau orbit anda hari ini. Di sini, anda boleh mendapatkan ringkasan pantas tentang misi pergerakan kami sebelum melancarkan diri ke modul lain!"
-          </div>
-        </div>
-
         <div class="home-hero">
           <h2 class="hero-title">Pusat Kawalan <span>Pergerakan Sektor</span></h2>
           <p class="hero-desc">
@@ -1666,14 +1651,6 @@
 
       <!-- SECTION: KALENDAR -->
       <div class="glass-card" id="tab-kalendar">
-        <!-- Character Guide -->
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛰️</div>
-          <div class="character-speech">
-            <strong>Satelit Waktu-Ruang:</strong> "Mengimbas masa... Waktu di angkasa adalah relatif, tetapi kami telah menyegerakannya ke Waktu Standard Dalat! Pilih mana-mana tarikh di kalendar untuk melihat pergerakan berjadual."
-          </div>
-        </div>
-
         <div class="time-grid">
           <!-- Galaxy Clock -->
           <div class="clock-container">
@@ -1710,14 +1687,6 @@
 
       <!-- SECTION: BORANG PERGERAKAN -->
       <div class="glass-card" id="tab-borang">
-        <!-- Character Guide -->
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">👽</div>
-          <div class="character-speech">
-            <strong>Zog si Penulis:</strong> "Bip bop! Masukkan koordinat dan destinasi misi anda ke dalam pangkalan data saya. Sekiranya kapal anda diculik lubang hitam (black hole), penyelamat tahu lokasi pencarian!"
-          </div>
-        </div>
-
         <div class="form-container">
           <h2 class="form-title" id="borang-title">Daftar Misi Pergerakan Pegawai</h2>
 
@@ -1820,14 +1789,6 @@
 
       <!-- SECTION: ANALISIS PERGERAKAN -->
       <div class="glass-card" id="tab-analisis">
-        <!-- Character Guide -->
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">🛸</div>
-          <div class="character-speech">
-            <strong>UFO Penganalisis:</strong> "Mengimbas log orbit... Di sini anda boleh meneliti senarai pergerakan pegawai Sektor Perancangan. Gunakan kotak carian untuk menapis log secara tepat!"
-          </div>
-        </div>
-
         <div class="analysis-header">
           <h2 class="analysis-title">Log & Analisis Pergerakan</h2>
           <div class="search-box">
@@ -1885,14 +1846,6 @@
 
       <!-- SECTION: JANA PERGERAKAN (DOWNLOAD) -->
       <div class="glass-card" id="tab-jana">
-        <!-- Character Guide -->
-        <div class="character-guide">
-          <div class="character-avatar" title="Klik untuk putaran kosmik!">☄️</div>
-          <div class="character-speech">
-            <strong>Komet Data:</strong> "Data bersedia untuk dihantar ke Sistem Fail Bumi! Hanya klik butang pemancar di bawah untuk menukar senarai log ke format Microsoft Excel (.xlsx)."
-          </div>
-        </div>
-
         <div class="generate-bay">
           <div class="teleport-terminal">
             <i class="fa-solid fa-satellite fa-3x" style="color: var(--accent-cyan); margin-bottom: 1rem; animation: float-fast 5s ease-in-out infinite;"></i>
@@ -1946,9 +1899,9 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Footer Section -->
-  <footer>
-    <p>&copy; 2026 Sektor Perancangan, Pejabat Pendidikan Daerah Dalat.</p>
-    <p>Dicipta dengan Sentuhan Kosmik Antigravity <i class="fa-solid fa-meteor" style="color: var(--primary-blue);"></i></p>
+  <footer style="text-align: center;">
+    <p style="font-weight: 600; margin-bottom: 2px;">Sektor Perancangan</p>
+    <p>Pejabat Pendidikan Daerah Dalat</p>
   </footer>
 
   <script>
@@ -2818,6 +2771,38 @@
     }
 
     // Table view populator
+    // Group records that share the same nama+destinasi+tujuan+nota+submittedBy
+    // AND have strictly consecutive dates — these were submitted as one multi-day batch.
+    function groupConsecutiveRecords(records) {
+      const sorted = [...records].sort((a, b) => new Date(a.tarikh) - new Date(b.tarikh));
+      const groups = [];
+      for (const rec of sorted) {
+        const last = groups[groups.length - 1];
+        const sameFields = last &&
+          last[0].nama === rec.nama &&
+          last[0].destinasi === rec.destinasi &&
+          last[0].tujuan === rec.tujuan &&
+          last[0].nota === rec.nota &&
+          last[0].submittedBy === rec.submittedBy;
+        if (sameFields) {
+          const lastDate = new Date(last[last.length - 1].tarikh + 'T00:00:00');
+          const thisDate = new Date(rec.tarikh + 'T00:00:00');
+          const diff = (thisDate - lastDate) / 86400000;
+          if (diff === 1) { last.push(rec); continue; }
+        }
+        groups.push([rec]);
+      }
+      // Return newest-first
+      return groups.reverse();
+    }
+
+    function fmtDate(ymd) {
+      try {
+        const p = ymd.split('-');
+        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ymd;
+      } catch(e) { return ymd; }
+    }
+
     function populateTable() {
       // Reflect the active period filter in the pill buttons + range label
       document.querySelectorAll('.period-btn').forEach((btn) => {
@@ -2831,10 +2816,9 @@
       const emptyDesc = document.getElementById('table-empty-desc');
 
       const periodRecords = movementRecords.filter((r) => isRecordInPeriod(r, currentAnalysisPeriod));
-      const sortedRecords = [...periodRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
       tbody.innerHTML = '';
 
-      if (sortedRecords.length === 0) {
+      if (periodRecords.length === 0) {
         emptyState.style.display = 'block';
         document.getElementById('insights-panel').style.display = 'none';
         if (emptyDesc) {
@@ -2844,13 +2828,16 @@
         }
         return;
       }
-      
+
       emptyState.style.display = 'none';
       document.getElementById('insights-panel').style.display = 'block';
 
-      sortedRecords.forEach((record) => {
+      const groups = groupConsecutiveRecords(periodRecords);
+
+      groups.forEach((group) => {
+        const record = group[0];
         const tr = document.createElement('tr');
-        
+
         let badgeClass = 'badge-lain';
         const tj = record.tujuan.toLowerCase();
         if (tj.includes('mesyuarat')) badgeClass = 'badge-mesyuarat';
@@ -2861,16 +2848,14 @@
         else if (tj.includes('pelepasan')) badgeClass = 'badge-pelepasan';
         else if (tj.includes('cuti')) badgeClass = 'badge-cuti';
 
-        let displayDate = record.tarikh;
-        try {
-          const parts = record.tarikh.split('-');
-          if (parts.length === 3) displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        } catch(e) {}
+        const displayDate = group.length > 1
+          ? `${fmtDate(group[0].tarikh)} — ${fmtDate(group[group.length - 1].tarikh)}`
+          : fmtDate(record.tarikh);
 
-        // Staff can see every officer's movements, but may only delete entries they submitted themselves
         const isOwnRecord = record.submittedBy && currentUserSession && record.submittedBy === currentUserSession.email;
+        const ids = JSON.stringify(group.map(r => r.id));
         const deleteCell = isOwnRecord
-          ? `<button class="action-btn" onclick="deleteRecord('${record.id}')" title="Padam Rekod">
+          ? `<button class="action-btn" onclick="deleteRecordGroup(${ids.replace(/"/g, "'")})" title="Padam Rekod">
               <i class="fa-solid fa-trash-can"></i>
             </button>`
           : `<i class="fa-solid fa-lock" style="color: rgba(255,255,255,0.15);" title="Hanya penghantar asal boleh memadam rekod ini"></i>`;
@@ -2948,6 +2933,11 @@
         console.error(err);
         showToast('Gagal memadam rekod. Sila semak sambungan ke pelayan pangkalan data.', 'error');
       }
+    }
+
+    async function deleteRecordGroup(ids) {
+      if (!Array.isArray(ids)) ids = [ids];
+      for (const id of ids) await deleteRecord(id);
     }
 
     // Chart Insights (Updated for new Purposes)
