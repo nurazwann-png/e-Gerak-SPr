@@ -2773,27 +2773,36 @@
     // Table view populator
     // Group records that share the same nama+destinasi+tujuan+nota+submittedBy
     // AND have strictly consecutive dates — these were submitted as one multi-day batch.
+    // Strategy: bucket by identity key first, then find consecutive date runs within each bucket.
     function groupConsecutiveRecords(records) {
-      const sorted = [...records].sort((a, b) => new Date(a.tarikh) - new Date(b.tarikh));
-      const groups = [];
-      for (const rec of sorted) {
-        const last = groups[groups.length - 1];
-        const sameFields = last &&
-          last[0].nama === rec.nama &&
-          last[0].destinasi === rec.destinasi &&
-          last[0].tujuan === rec.tujuan &&
-          last[0].nota === rec.nota &&
-          last[0].submittedBy === rec.submittedBy;
-        if (sameFields) {
-          const lastDate = new Date(last[last.length - 1].tarikh + 'T00:00:00');
-          const thisDate = new Date(rec.tarikh + 'T00:00:00');
-          const diff = (thisDate - lastDate) / 86400000;
-          if (diff === 1) { last.push(rec); continue; }
-        }
-        groups.push([rec]);
+      // 1. Bucket by identity
+      const buckets = {};
+      for (const rec of records) {
+        const key = [rec.nama, rec.destinasi, rec.tujuan, rec.nota, rec.submittedBy].join('\x00');
+        if (!buckets[key]) buckets[key] = [];
+        buckets[key].push(rec);
       }
-      // Return newest-first
-      return groups.reverse();
+
+      // 2. Within each bucket, sort by date and split into consecutive runs
+      const allGroups = [];
+      for (const key of Object.keys(buckets)) {
+        const sorted = buckets[key].sort((a, b) => new Date(a.tarikh) - new Date(b.tarikh));
+        let run = [sorted[0]];
+        for (let i = 1; i < sorted.length; i++) {
+          const prev = new Date(sorted[i - 1].tarikh + 'T00:00:00');
+          const curr = new Date(sorted[i].tarikh + 'T00:00:00');
+          if ((curr - prev) / 86400000 === 1) {
+            run.push(sorted[i]);
+          } else {
+            allGroups.push(run);
+            run = [sorted[i]];
+          }
+        }
+        allGroups.push(run);
+      }
+
+      // 3. Sort groups newest-first by the group's earliest date
+      return allGroups.sort((a, b) => new Date(b[0].tarikh) - new Date(a[0].tarikh));
     }
 
     function fmtDate(ymd) {
