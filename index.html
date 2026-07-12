@@ -1628,7 +1628,7 @@
           <div class="stat-card">
             <i class="fa-solid fa-network-wired"></i>
             <div class="stat-val" id="stat-unique-officers">0</div>
-            <div class="stat-lbl">Pegawai Terlibats</div>
+            <div class="stat-lbl">Pegawai Terlibat</div>
           </div>
         </div>
 
@@ -1732,6 +1732,23 @@
                 <input class="form-input" type="date" id="tarikh_pergerakan" required>
                 <i class="fa-solid fa-calendar-day"></i>
               </div>
+              <!-- Multi-day toggle -->
+              <label style="display:inline-flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer; user-select:none; font-size:0.82rem; color:var(--text-muted);">
+                <input type="checkbox" id="multiday-toggle" onchange="toggleMultiday(this.checked)" style="width:15px; height:15px; accent-color:var(--accent-cyan); cursor:pointer;">
+                Urusan melebihi 1 hari
+              </label>
+            </div>
+
+            <!-- Tarikh Akhir (hidden until multi-day checked) -->
+            <div class="form-group" id="tarikh-akhir-group" style="display:none;">
+              <label class="form-label" for="tarikh_akhir">Tarikh Akhir</label>
+              <div class="input-wrapper">
+                <input class="form-input" type="date" id="tarikh_akhir">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <p style="font-size:0.75rem; color:var(--accent-cyan); margin-top:6px;">
+                <i class="fa-solid fa-circle-info"></i> Satu rekod akan didaftarkan bagi setiap hari dalam julat tarikh ini.
+              </p>
             </div>
 
             <!-- Destinasi/Lokasi -->
@@ -2502,6 +2519,8 @@
         borangSessionDate = '';
         document.getElementById('borang-title').textContent = 'Daftar Misi Pergerakan Pegawai';
         document.getElementById('post-submit-panel').style.display = 'none';
+        document.getElementById('multiday-toggle').checked = false;
+        toggleMultiday(false);
       }
 
       const navButtons = document.querySelectorAll('nav .nav-btn');
@@ -2587,52 +2606,88 @@
     let borangSessionCount = 0;
     let borangSessionDate = '';
 
+    function toggleMultiday(checked) {
+      const group = document.getElementById('tarikh-akhir-group');
+      const tarikh_akhir = document.getElementById('tarikh_akhir');
+      group.style.display = checked ? 'block' : 'none';
+      tarikh_akhir.required = checked;
+      if (checked && !tarikh_akhir.value) {
+        tarikh_akhir.value = document.getElementById('tarikh_pergerakan').value;
+      }
+    }
+
+    // Returns array of 'YYYY-MM-DD' strings for each day from start to end (inclusive)
+    function dateRange(start, end) {
+      const dates = [];
+      const cur = new Date(start + 'T00:00:00');
+      const last = new Date(end + 'T00:00:00');
+      while (cur <= last) {
+        dates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+      }
+      return dates;
+    }
+
     async function handleFormSubmit(event) {
       event.preventDefault();
 
       const nama = document.getElementById('nama_pegawai').value.trim();
-      const tarikh = document.getElementById('tarikh_pergerakan').value;
+      const tarikhMula = document.getElementById('tarikh_pergerakan').value;
+      const isMultiday = document.getElementById('multiday-toggle').checked;
+      const tarikhAkhir = isMultiday ? document.getElementById('tarikh_akhir').value : tarikhMula;
       const destinasi = document.getElementById('destinasi').value.trim();
       const tujuan = document.getElementById('tujuan').value;
       const nota = document.getElementById('nota').value.trim();
 
-      const record = { id: generateId(), nama, tarikh, destinasi, tujuan, nota, submittedBy: currentUserSession.email };
+      if (isMultiday && tarikhAkhir < tarikhMula) {
+        showToast('Tarikh akhir tidak boleh lebih awal dari tarikh mula.', 'error');
+        return;
+      }
+
+      const dates = dateRange(tarikhMula, tarikhAkhir);
 
       try {
-        const res = await fetch(`${API_BASE}/movements`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(record)
-        });
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const records = dates.map(tarikh => ({
+          id: generateId(), nama, tarikh, destinasi, tujuan, nota, submittedBy: currentUserSession.email
+        }));
 
-        movementRecords.push(record);
+        for (const record of records) {
+          const res = await fetch(`${API_BASE}/movements`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(record)
+          });
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          movementRecords.push(record);
+        }
+
         updateDashboardStats();
 
-        // Track session count for this date
-        if (tarikh !== borangSessionDate) {
-          borangSessionCount = 0;
-          borangSessionDate = tarikh;
-        }
-        borangSessionCount++;
+        // Track session count
+        borangSessionCount += dates.length;
+        borangSessionDate = tarikhMula;
 
         // Clear movement-specific fields, keep nama & tarikh for next entry
         document.getElementById('destinasi').value = '';
         document.getElementById('tujuan').value = '';
         document.getElementById('nota').value = '';
 
-        // Update title to show count
-        const displayDate = new Date(tarikh + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('borang-title').textContent = `${borangSessionCount} Pergerakan Didaftarkan — ${displayDate}`;
+        // Update title
+        const fmtMula = new Date(tarikhMula + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+        const titleText = dates.length > 1
+          ? `${borangSessionCount} Pergerakan Didaftarkan — ${fmtMula} hingga ${new Date(tarikhAkhir + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}`
+          : `${borangSessionCount} Pergerakan Didaftarkan — ${fmtMula}`;
+        document.getElementById('borang-title').textContent = titleText;
 
         // Show post-submit panel
         const panel = document.getElementById('post-submit-panel');
+        const daysLabel = dates.length > 1 ? `${dates.length} hari` : '1 hari';
         document.getElementById('post-submit-msg').textContent =
-          `"${destinasi}" (${tujuan}) berjaya disimpan. Tambah lagi atau selesai?`;
+          `"${destinasi}" (${tujuan}) — ${daysLabel} berjaya disimpan. Tambah lagi atau selesai?`;
         panel.style.display = 'block';
         panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-        showToast(`Pergerakan ${borangSessionCount} bagi ${nama} berjaya dihantar!`, 'success');
+        showToast(`${dates.length > 1 ? dates.length + ' rekod' : 'Pergerakan'} bagi ${nama} berjaya dihantar!`, 'success');
       } catch (err) {
         console.error(err);
         showToast('Gagal menghantar pergerakan. Sila semak sambungan ke pelayan pangkalan data.', 'error');
@@ -2645,7 +2700,6 @@
     }
 
     function finishMovements() {
-      // Reset borang state for next use
       borangSessionCount = 0;
       borangSessionDate = '';
       document.getElementById('borang-title').textContent = 'Daftar Misi Pergerakan Pegawai';
@@ -2653,6 +2707,8 @@
       document.getElementById('destinasi').value = '';
       document.getElementById('tujuan').value = '';
       document.getElementById('nota').value = '';
+      document.getElementById('multiday-toggle').checked = false;
+      toggleMultiday(false);
       switchTab('analisis');
     }
 
