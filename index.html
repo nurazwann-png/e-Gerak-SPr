@@ -1214,6 +1214,15 @@
       .teleport-grid {
         grid-template-columns: 1fr;
       }
+      /* Admin add-staff form: 2-col on tablet */
+      .admin-staff-form {
+        grid-template-columns: 1fr 1fr !important;
+      }
+      /* Hide Nota column on tablet to save space */
+      #movement-table th:nth-child(5),
+      #movement-table td:nth-child(5) {
+        display: none;
+      }
     }
 
     /* --- Mobile (≤600px) --- */
@@ -1307,7 +1316,25 @@
 
       /* Generate page */
       .generate-bay { max-width: 100%; }
-      .beam-btn { font-size: 0.95rem; padding: 12px 24px; }
+      .beam-btn { font-size: 0.82rem; padding: 11px 18px; white-space: nowrap; }
+
+      /* Admin add-staff form: single column on mobile */
+      .admin-staff-form {
+        grid-template-columns: 1fr !important;
+      }
+      /* Admin add-jawatan form: stack on mobile */
+      form[onsubmit="handleAddJawatan(event)"] {
+        flex-direction: column !important;
+      }
+      form[onsubmit="handleAddJawatan(event)"] button {
+        width: 100% !important;
+      }
+      /* Admin panel header */
+      #tab-admin-dashboard .analysis-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
     }
   </style>
 </head>
@@ -1499,7 +1526,7 @@
         <div class="insights-panel">
           <div class="insights-title"><i class="fa-solid fa-users"></i> Urus Staf (Tambah / Padam Pengguna)</div>
 
-          <form onsubmit="handleAddStaff(event)" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 1.25rem;">
+          <form onsubmit="handleAddStaff(event)" class="admin-staff-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 1.25rem;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" for="staff-nama">Nama</label>
               <input class="form-input" style="padding-left: 14px;" type="text" id="staff-nama" placeholder="Nama penuh" required>
