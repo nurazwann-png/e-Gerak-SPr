@@ -1238,20 +1238,18 @@
         font-size: 0.78rem;
       }
 
-      /* Nav — single scrollable row, no wrap */
+      /* Nav — wrap to multiple rows, no horizontal scroll */
       nav {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        justify-content: flex-start;
-        padding: 0 1rem;
+        flex-wrap: wrap;
+        overflow-x: visible;
+        justify-content: center;
+        padding: 0 0.5rem;
         margin: 0.8rem auto 1.2rem auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        gap: 6px;
       }
-      nav::-webkit-scrollbar { display: none; }
       .nav-btn {
         flex-shrink: 0;
-        padding: 7px 12px;
+        padding: 7px 11px;
         font-size: 0.78rem;
         gap: 5px;
       }
