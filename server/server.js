@@ -243,7 +243,8 @@ const server = http.createServer(async (req, res) => {
     // GET /api/staff/check?email=... - public yes/no roster lookup used by the login gate
     if (url.pathname === '/api/staff/check' && req.method === 'GET') {
       const email = (url.searchParams.get('email') || '').toLowerCase();
-      sendJSON(res, 200, { allowed: isStaffEmail(email) });
+      const staff = db.prepare('SELECT email, nama, jawatan FROM staff WHERE email = ?').get(email) || null;
+      sendJSON(res, 200, { allowed: !!staff, staff });
       return;
     }
 

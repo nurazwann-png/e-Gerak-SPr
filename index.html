@@ -1201,27 +1201,113 @@
     }
 
     /* Responsive adjustments */
+
+    /* --- Tablet (≤768px) --- */
+    @media (max-width: 768px) {
+      .analysis-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .search-box {
+        max-width: 100%;
+      }
+      .teleport-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* --- Mobile (≤600px) --- */
     @media (max-width: 600px) {
+      /* Header */
       header {
-        padding: 1.5rem 1rem 0.5rem 1rem;
+        padding: 1.2rem 1rem 0.4rem 1rem;
       }
       h1 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
       }
+      .subtitle {
+        font-size: 0.78rem;
+      }
+
+      /* Nav — single scrollable row, no wrap */
+      nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 0 1rem;
+        margin: 0.8rem auto 1.2rem auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      nav::-webkit-scrollbar { display: none; }
       .nav-btn {
-        padding: 8px 14px;
-        font-size: 0.8rem;
+        flex-shrink: 0;
+        padding: 7px 12px;
+        font-size: 0.78rem;
+        gap: 5px;
       }
+      .nav-btn i { font-size: 0.85rem; }
+
+      /* Main content */
+      main {
+        padding: 0 0.75rem 2rem 0.75rem;
+      }
+
+      /* Cards */
       .glass-card {
-        padding: 1.5rem;
+        padding: 1.25rem;
+        border-radius: 12px;
       }
       .character-guide {
         flex-direction: column;
         text-align: center;
+        padding: 0.75rem;
+        gap: 10px;
       }
-      .digital-clock {
-        font-size: 2.5rem;
+      .character-avatar { font-size: 2rem; }
+      .character-speech { font-size: 0.82rem; }
+
+      /* Auth card */
+      .auth-container { margin: 1.2rem auto; }
+      .auth-card { padding: 1.5rem 1.25rem; }
+      .auth-header h2 { font-size: 1.3rem; }
+
+      /* Hero */
+      .hero-title { font-size: 1.5rem; }
+      .hero-desc { font-size: 0.85rem; }
+
+      /* Stats grid — 2 columns on mobile */
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
       }
+      .stat-val { font-size: 1.7rem; }
+
+      /* Period filter — wrap date range to its own line */
+      .period-filter { gap: 6px; }
+      .period-range {
+        display: block;
+        width: 100%;
+        margin-top: 2px;
+      }
+
+      /* Table — prevent horizontal blowout */
+      th, td {
+        padding: 10px 10px;
+        font-size: 0.78rem;
+      }
+      th { white-space: nowrap; }
+
+      /* Clock */
+      .digital-clock { font-size: 2.2rem; }
+      .clock-container { min-height: 160px; }
+
+      /* Form container */
+      .form-container { max-width: 100%; }
+
+      /* Generate page */
+      .generate-bay { max-width: 100%; }
+      .beam-btn { font-size: 0.95rem; padding: 12px 24px; }
     }
   </style>
 </head>
@@ -1322,6 +1408,39 @@
         </p>
 
         <p style="text-align: center; margin-top: 0.75rem; font-size: 0.78rem;">
+          <a href="#" class="auth-toggle-link" onclick="showAdminPinView(event)">Masuk sebagai Admin</a>
+        </p>
+      </div>
+
+      <!-- VIEW: RETURNING USER — email only -->
+      <div class="auth-card" id="view-email-login" style="display: none;">
+        <div class="auth-header">
+          <h2>Log Masuk</h2>
+          <p>Masukkan alamat e-mel anda untuk meneruskan</p>
+        </div>
+
+        <div class="error-msg" id="email-login-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="email-login-error-text">E-mel tidak dijumpai. Sila daftar semula.</span>
+        </div>
+
+        <form onsubmit="handleEmailLoginSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="returning-email">Alamat E-mel (MOE)</label>
+            <div class="input-wrapper">
+              <input class="form-input" type="email" id="returning-email" placeholder="nama@moe.gov.my" required>
+              <i class="fa-solid fa-envelope"></i>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Pangkalan Orbit
+          </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.25rem; font-size: 0.78rem;">
+          <a href="#" class="auth-toggle-link" onclick="showFullRegisterView(event)">Daftar akaun baru</a>
+          &nbsp;·&nbsp;
           <a href="#" class="auth-toggle-link" onclick="showAdminPinView(event)">Masuk sebagai Admin</a>
         </p>
       </div>
@@ -1575,9 +1694,28 @@
         </div>
 
         <div class="form-container">
-          <h2 class="form-title">Daftar Misi Pergerakan Pegawai</h2>
+          <h2 class="form-title" id="borang-title">Daftar Misi Pergerakan Pegawai</h2>
+
+          <!-- Post-submit action panel (hidden until first record is saved) -->
+          <div id="post-submit-panel" style="display:none; margin-bottom: 1.5rem;">
+            <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-circle-check" style="color: var(--success-green); font-size: 1.2rem;"></i>
+                <span id="post-submit-msg" style="font-size: 0.88rem; color: #a7f3d0;"></span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" onclick="addAnotherMovement()" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #a7f3d0; padding: 7px 14px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-plus"></i> Tambah Pergerakan Lain
+                </button>
+                <button type="button" onclick="finishMovements()" style="background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.35); color: #93c5fd; padding: 7px 14px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-list"></i> Selesai / Lihat Log
+                </button>
+              </div>
+            </div>
+          </div>
+
           <form id="movement-form" onsubmit="handleFormSubmit(event)">
-            
+
             <!-- Nama Pegawai -->
             <div class="form-group">
               <label class="form-label" for="nama_pegawai">Nama Pegawai</label>
@@ -1883,9 +2021,10 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('tarikh_pergerakan').value = today;
 
-      // Remember the last e-mel used to sign in, so the identify form isn't blank next time
+      // If user has registered before, pre-fill the returning-user email field
       const rememberedEmail = localStorage.getItem('ppd_dalat_remembered_email');
       if (rememberedEmail) {
+        document.getElementById('returning-email').value = rememberedEmail;
         document.getElementById('identify-email').value = rememberedEmail;
       }
 
@@ -1971,6 +2110,7 @@
     function showAdminPinView(event) {
       event.preventDefault();
       document.getElementById('view-identify').style.display = 'none';
+      document.getElementById('view-email-login').style.display = 'none';
       document.getElementById('view-admin-pin').style.display = 'block';
       document.getElementById('admin-pin-error').style.display = 'none';
     }
@@ -1978,7 +2118,52 @@
     function showIdentifyView(event) {
       event.preventDefault();
       document.getElementById('view-admin-pin').style.display = 'none';
+      document.getElementById('view-email-login').style.display = 'none';
       document.getElementById('view-identify').style.display = 'block';
+    }
+
+    function showFullRegisterView(event) {
+      event.preventDefault();
+      document.getElementById('view-email-login').style.display = 'none';
+      document.getElementById('view-admin-pin').style.display = 'none';
+      document.getElementById('view-identify').style.display = 'block';
+    }
+
+    async function handleEmailLoginSubmit(event) {
+      event.preventDefault();
+      const errorDiv = document.getElementById('email-login-error');
+      const errorTxt = document.getElementById('email-login-error-text');
+      errorDiv.style.display = 'none';
+
+      const email = document.getElementById('returning-email').value.trim().toLowerCase();
+
+      if (!ALLOWED_EMAIL_REGEX.test(email)) {
+        errorTxt.textContent = "Akses disekat. Sila gunakan e-mel rasmi MOE (@moe.gov.my).";
+        errorDiv.style.display = 'flex';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/staff/check?email=${encodeURIComponent(email)}`);
+        const { allowed, staff } = await res.json();
+
+        if (!allowed || !staff) {
+          errorTxt.textContent = "E-mel tidak dijumpai dalam sistem. Sila daftar akaun baru.";
+          errorDiv.style.display = 'flex';
+          return;
+        }
+
+        currentUserSession = { name: staff.nama, email: staff.email, position: staff.jawatan };
+        localStorage.setItem('ppd_dalat_session', JSON.stringify(currentUserSession));
+        localStorage.setItem('ppd_dalat_remembered_email', email);
+
+        showToast(`Selamat datang semula, ${staff.nama}!`, 'success');
+        evaluateSessionView();
+      } catch (err) {
+        console.error(err);
+        errorTxt.textContent = "Tidak dapat menghubungi pelayan. Sila cuba lagi.";
+        errorDiv.style.display = 'flex';
+      }
     }
 
     async function handleAdminPinSubmit(event) {
@@ -2294,17 +2479,30 @@
         updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
         switchTab('utama');
       } else {
-        // Not identified yet
+        // Not identified yet — show the right login view
         authPanel.style.display = 'block';
         mainContent.style.display = 'none';
         appNav.style.display = 'none';
         headerUserTag.style.display = 'none';
+
+        const hasRegistered = !!localStorage.getItem('ppd_dalat_remembered_email');
+        document.getElementById('view-identify').style.display = hasRegistered ? 'none' : 'block';
+        document.getElementById('view-email-login').style.display = hasRegistered ? 'block' : 'none';
+        document.getElementById('view-admin-pin').style.display = 'none';
       }
     }
 
     // SPA Tab Navigation Router
     function switchTab(tabName) {
       if (!currentUserSession) return;
+
+      // Reset borang session state when navigating away from borang
+      if (tabName !== 'borang' && borangSessionCount > 0) {
+        borangSessionCount = 0;
+        borangSessionDate = '';
+        document.getElementById('borang-title').textContent = 'Daftar Misi Pergerakan Pegawai';
+        document.getElementById('post-submit-panel').style.display = 'none';
+      }
 
       const navButtons = document.querySelectorAll('nav .nav-btn');
       navButtons.forEach(btn => {
@@ -2385,6 +2583,10 @@
     }
 
     // Form Submission
+    // Tracks how many movements have been saved in the current borang session
+    let borangSessionCount = 0;
+    let borangSessionDate = '';
+
     async function handleFormSubmit(event) {
       event.preventDefault();
 
@@ -2405,22 +2607,53 @@
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
         movementRecords.push(record);
+        updateDashboardStats();
 
-        // Reset fields but keep officer name defaulted
+        // Track session count for this date
+        if (tarikh !== borangSessionDate) {
+          borangSessionCount = 0;
+          borangSessionDate = tarikh;
+        }
+        borangSessionCount++;
+
+        // Clear movement-specific fields, keep nama & tarikh for next entry
         document.getElementById('destinasi').value = '';
         document.getElementById('tujuan').value = '';
         document.getElementById('nota').value = '';
 
-        updateDashboardStats();
-        showToast(`Pergerakan ${nama} berjaya dihantar ke log Sektor Perancangan!`, 'success');
+        // Update title to show count
+        const displayDate = new Date(tarikh + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('borang-title').textContent = `${borangSessionCount} Pergerakan Didaftarkan — ${displayDate}`;
 
-        setTimeout(() => {
-          switchTab('analisis');
-        }, 1000);
+        // Show post-submit panel
+        const panel = document.getElementById('post-submit-panel');
+        document.getElementById('post-submit-msg').textContent =
+          `"${destinasi}" (${tujuan}) berjaya disimpan. Tambah lagi atau selesai?`;
+        panel.style.display = 'block';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        showToast(`Pergerakan ${borangSessionCount} bagi ${nama} berjaya dihantar!`, 'success');
       } catch (err) {
         console.error(err);
         showToast('Gagal menghantar pergerakan. Sila semak sambungan ke pelayan pangkalan data.', 'error');
       }
+    }
+
+    function addAnotherMovement() {
+      document.getElementById('destinasi').focus();
+      document.getElementById('destinasi').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function finishMovements() {
+      // Reset borang state for next use
+      borangSessionCount = 0;
+      borangSessionDate = '';
+      document.getElementById('borang-title').textContent = 'Daftar Misi Pergerakan Pegawai';
+      document.getElementById('post-submit-panel').style.display = 'none';
+      document.getElementById('destinasi').value = '';
+      document.getElementById('tujuan').value = '';
+      document.getElementById('nota').value = '';
+      switchTab('analisis');
     }
 
     // Dynamic Toasts
