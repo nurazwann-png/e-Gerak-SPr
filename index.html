@@ -2099,7 +2099,7 @@
       await loadJawatanOptions('identify-position');
 
       // Default Borang Date
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateStr();
       document.getElementById('tarikh_pergerakan').value = today;
 
       // If user has registered before, pre-fill the returning-user email field
@@ -2557,7 +2557,7 @@
         updateDashboardStats();
         populateTable();
         renderCalendar();
-        updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
+        updateSelectedDayEvents(localDateStr());
         switchTab('utama');
       } else {
         // Not identified yet — show the right login view
@@ -2640,7 +2640,7 @@
     function updateDashboardStats() {
       document.getElementById('stat-total-logs').textContent = movementRecords.length;
 
-      const todayString = new Date().toISOString().split('T')[0];
+      const todayString = localDateStr();
       const activeTodayCount = movementRecords.filter(r => r.tarikh === todayString).length;
       document.getElementById('stat-active-today').textContent = activeTodayCount;
 
@@ -2711,7 +2711,7 @@
       const cur = new Date(start + 'T00:00:00');
       const last = new Date(end + 'T00:00:00');
       while (cur <= last) {
-        dates.push(cur.toISOString().split('T')[0]);
+        dates.push(localDateStr(cur));
         cur.setDate(cur.getDate() + 1);
       }
       return dates;
@@ -2835,6 +2835,11 @@
     function parseLocalDate(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
       return new Date(y, m - 1, d);
+    }
+
+    // Returns today's date as 'YYYY-MM-DD' in LOCAL time (not UTC)
+    function localDateStr(d = new Date()) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
     function getPeriodRange(period, reference = new Date()) {
@@ -3341,7 +3346,7 @@
         updateDashboardStats();
         populateTable();
         renderCalendar();
-        updateSelectedDayEvents(new Date().toISOString().split('T')[0]);
+        updateSelectedDayEvents(localDateStr());
         updateJanaMetrics();
         showToast("Semua data pergerakan telah dipadamkan.", "warning");
       } catch (err) {
