@@ -1774,6 +1774,22 @@
               </div>
             </div>
 
+            <!-- Masa -->
+            <div class="form-group">
+              <label class="form-label">Masa <span style="font-weight:400; color:var(--text-muted);">(Pilihan)</span></label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="input-wrapper">
+                  <input class="form-input" type="time" id="masa_bertolak" placeholder="Bertolak">
+                  <i class="fa-solid fa-plane-departure"></i>
+                </div>
+                <div class="input-wrapper">
+                  <input class="form-input" type="time" id="masa_balik" placeholder="Balik">
+                  <i class="fa-solid fa-plane-arrival"></i>
+                </div>
+              </div>
+              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Masa Bertolak &nbsp;·&nbsp; Masa Balik</p>
+            </div>
+
             <!-- Nota -->
             <div class="form-group">
               <label class="form-label" for="nota">Nota Tambahan</label>
@@ -2616,6 +2632,9 @@
       const destinasi = document.getElementById('destinasi').value.trim();
       const tujuan = document.getElementById('tujuan').value;
       const nota = document.getElementById('nota').value.trim();
+      const masaBertolak = document.getElementById('masa_bertolak').value;
+      const masaBalik = document.getElementById('masa_balik').value;
+      const masa = masaBertolak && masaBalik ? `${masaBertolak} - ${masaBalik}` : masaBertolak || masaBalik || '';
 
       if (isMultiday && tarikhAkhir < tarikhMula) {
         showToast('Tarikh akhir tidak boleh lebih awal dari tarikh mula.', 'error');
@@ -2626,7 +2645,7 @@
 
       try {
         const records = dates.map(tarikh => ({
-          id: generateId(), nama, tarikh, destinasi, tujuan, nota, submittedBy: currentUserSession.email
+          id: generateId(), nama, tarikh, destinasi, tujuan, nota, masa, submittedBy: currentUserSession.email
         }));
 
         for (const record of records) {
@@ -2686,6 +2705,8 @@
       document.getElementById('tujuan').value = '';
       document.getElementById('nota').value = '';
       document.getElementById('multiday-toggle').checked = false;
+      document.getElementById('masa_bertolak').value = '';
+      document.getElementById('masa_balik').value = '';
       toggleMultiday(false);
       switchTab('analisis');
     }
@@ -2729,7 +2750,10 @@
         end = new Date(start);
         end.setDate(end.getDate() + 1);
       } else if (period === 'week') {
-        start.setDate(start.getDate() - start.getDay()); // roll back to Ahad (Sunday)
+        // Roll back to Monday (Isnin): getDay() 0=Ahad,1=Isnin,...,6=Sabtu
+        const day = start.getDay();
+        const daysToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - daysToMonday);
         end = new Date(start);
         end.setDate(end.getDate() + 7);
       } else if (period === 'month') {
@@ -2857,9 +2881,11 @@
         else if (tj.includes('pelepasan')) badgeClass = 'badge-pelepasan';
         else if (tj.includes('cuti')) badgeClass = 'badge-cuti';
 
-        const displayDate = group.length > 1
+        const dateStr = group.length > 1
           ? `${fmtDate(group[0].tarikh)} — ${fmtDate(group[group.length - 1].tarikh)}`
           : fmtDate(record.tarikh);
+        const masaStr = record.masa ? `<br><span style="font-size:0.75rem;color:var(--text-muted);"><i class="fa-regular fa-clock"></i> ${record.masa}</span>` : '';
+        const displayDate = dateStr + masaStr;
 
         const isOwnRecord = record.submittedBy && currentUserSession && record.submittedBy === currentUserSession.email;
         const ids = JSON.stringify(group.map(r => r.id));

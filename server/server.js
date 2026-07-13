@@ -73,9 +73,12 @@ db.exec(`
     destinasi TEXT NOT NULL,
     tujuan TEXT NOT NULL,
     nota TEXT,
+    masa TEXT,
     submittedBy TEXT NOT NULL
   )
 `);
+// Add masa column to existing databases that predate this field
+try { db.exec(`ALTER TABLE movements ADD COLUMN masa TEXT DEFAULT ''`); } catch (_) {}
 
 // Staff roster - only e-mails an admin has added here may sign in. This is
 // what gives "delete a user" real meaning (it revokes their ability to log
@@ -176,7 +179,7 @@ const server = http.createServer(async (req, res) => {
     // someone could otherwise POST directly bypassing the identify form).
     if (url.pathname === '/api/movements' && req.method === 'POST') {
       const body = await readJsonBody(req);
-      const { id, nama, tarikh, destinasi, tujuan, nota, submittedBy } = body;
+      const { id, nama, tarikh, destinasi, tujuan, nota, masa, submittedBy } = body;
 
       if (!id || !nama || !tarikh || !destinasi || !tujuan || !submittedBy) {
         sendJSON(res, 400, { error: 'Missing required fields' });
@@ -188,9 +191,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       db.prepare(`
-        INSERT INTO movements (id, nama, tarikh, destinasi, tujuan, nota, submittedBy)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(id, nama, tarikh, destinasi, tujuan, nota || '', submittedBy);
+        INSERT INTO movements (id, nama, tarikh, destinasi, tujuan, nota, masa, submittedBy)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, nama, tarikh, destinasi, tujuan, nota || '', masa || '', submittedBy);
 
       sendJSON(res, 201, { ok: true });
       return;
